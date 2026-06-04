@@ -1,0 +1,2899 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Crypto Clicker</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Rajdhani:wght@400;500;600;700&display=swap');
+
+:root {
+  --bg: #080812;
+  --bg2: #0d0d1e;
+  --bg3: #12122a;
+  --bg4: #16163a;
+  --border: #1e1e45;
+  --border2: #2a2a5a;
+  --gold: #ffd700;
+  --gold2: #b8860b;
+  --text: #d0d0e0;
+  --text2: #8888aa;
+  --text3: #55556a;
+  --green: #00ff88;
+  --green2: #00aa55;
+  --red: #ff4466;
+  --red2: #aa2233;
+  --purple: #9b30ff;
+  --purple2: #6a1db0;
+  --cyan: #00d4ff;
+  --orange: #ff8800;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 15px;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Scanline overlay */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px);
+  pointer-events: none;
+  z-index: 9999;
+}
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
+
+/* ===== HEADER ===== */
+header {
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 20px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.logo {
+  font-family: 'Space Mono', monospace;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--gold);
+  letter-spacing: 3px;
+  text-shadow: 0 0 20px rgba(255,215,0,0.4);
+  white-space: nowrap;
+}
+
+.logo span { color: var(--cyan); }
+
+#money-display {
+  font-family: 'Space Mono', monospace;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--gold);
+  text-shadow: 0 0 30px rgba(255,215,0,0.3);
+  letter-spacing: 1px;
+}
+
+.header-stats {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  font-size: 13px;
+  color: var(--text2);
+  font-family: 'Space Mono', monospace;
+  margin-left: auto;
+}
+
+.header-stat { display: flex; flex-direction: column; align-items: center; }
+.header-stat-label { font-size: 10px; color: var(--text3); letter-spacing: 1px; text-transform: uppercase; }
+.header-stat-val { color: var(--gold); font-size: 14px; }
+
+/* ===== EVENT BANNER ===== */
+#event-banner {
+  display: none;
+  padding: 10px 20px;
+  text-align: center;
+  font-family: 'Space Mono', monospace;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  animation: blink 0.8s infinite;
+  border-bottom: 1px solid;
+  position: sticky;
+  top: 65px;
+  z-index: 99;
+}
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.7} }
+
+/* ===== MAIN LAYOUT ===== */
+main {
+  display: grid;
+  grid-template-columns: 260px 1fr 300px;
+  min-height: calc(100vh - 65px);
+}
+
+@media (max-width: 900px) {
+  main { grid-template-columns: 1fr; }
+}
+
+/* ===== LEFT PANEL ===== */
+#left-panel {
+  background: var(--bg2);
+  border-right: 1px solid var(--border);
+  padding: 20px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  position: sticky;
+  top: 65px;
+  max-height: calc(100vh - 65px);
+  overflow-y: auto;
+}
+
+/* ===== COIN ===== */
+#coin-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 160px;
+  height: 160px;
+}
+
+#coin-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  position: relative;
+  z-index: 2;
+  transition: transform 0.08s;
+}
+
+#coin-btn:active { transform: scale(0.92); }
+
+#coin-face {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, #ffd700, #ff9500, #ffd700, #b8860b, #ffd700, #ff9500, #ffd700);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 72px;
+  box-shadow: 0 0 0 4px #b8860b, 0 0 40px rgba(255,215,0,0.25), inset 0 4px 12px rgba(255,255,255,0.15);
+  animation: coinSpin 0s linear paused;
+  user-select: none;
+  transition: box-shadow 0.2s;
+}
+
+#coin-btn:hover #coin-face {
+  box-shadow: 0 0 0 4px #ffd700, 0 0 60px rgba(255,215,0,0.4), inset 0 4px 12px rgba(255,255,255,0.2);
+}
+
+/* Pulse ring */
+.coin-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid rgba(255,215,0,0.3);
+  animation: ringPulse 2s infinite;
+  pointer-events: none;
+}
+.coin-ring:nth-child(2) { animation-delay: 0.5s; }
+.coin-ring:nth-child(3) { animation-delay: 1s; }
+
+@keyframes ringPulse {
+  0% { transform: scale(1); opacity: 0.6; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+
+/* ===== BOOST DISPLAY ===== */
+#boost-display {
+  display: none;
+  background: rgba(0,255,136,0.1);
+  border: 1px solid var(--green2);
+  border-radius: 8px;
+  padding: 8px 12px;
+  text-align: center;
+  font-family: 'Space Mono', monospace;
+  font-size: 12px;
+  color: var(--green);
+  width: 100%;
+}
+
+/* ===== MESSAGE ===== */
+#msg {
+  min-height: 24px;
+  text-align: center;
+  font-size: 13px;
+  font-family: 'Space Mono', monospace;
+  transition: opacity 0.3s;
+  width: 100%;
+}
+
+/* ===== MINI STATS GRID ===== */
+.stat-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  width: 100%;
+}
+
+.stat-box {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px;
+  text-align: center;
+}
+.stat-box-label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 1px; }
+.stat-box-val { font-size: 17px; font-weight: 700; color: var(--gold); font-family: 'Space Mono', monospace; }
+
+/* ===== MINER DOTS ===== */
+#miner-visual {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  width: 100%;
+  padding: 8px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  min-height: 36px;
+}
+
+.mdot {
+  width: 10px; height: 10px;
+  border-radius: 2px;
+  background: var(--gold);
+  opacity: 0.7;
+  animation: minerBlink 2s infinite;
+}
+
+.mdot:nth-child(odd) { animation-delay: 0.5s; }
+
+@keyframes minerBlink {
+  0%,100% { opacity: 0.7; }
+  50% { opacity: 0.4; }
+}
+
+/* ===== SECTION PANELS ===== */
+.panel {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 12px;
+}
+
+.panel-title {
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text3);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.panel-badge {
+  background: var(--bg4);
+  color: var(--gold);
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 20px;
+  border: 1px solid var(--border2);
+}
+
+/* ===== CENTER PANEL ===== */
+#center-panel {
+  padding: 16px;
+  overflow-y: auto;
+}
+
+/* ===== TABS ===== */
+.tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 16px;
+  background: var(--bg2);
+  padding: 4px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+}
+
+.tab {
+  flex: 1;
+  padding: 8px 4px;
+  background: none;
+  border: none;
+  color: var(--text3);
+  cursor: pointer;
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 1px;
+  border-radius: 7px;
+  transition: all 0.15s;
+  text-transform: uppercase;
+}
+
+.tab.active {
+  background: var(--bg4);
+  color: var(--gold);
+  border: 1px solid var(--border2);
+}
+
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* ===== UPGRADE ITEMS ===== */
+.upg-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 6px;
+  cursor: pointer;
+  transition: all 0.15s;
+  position: relative;
+  overflow: hidden;
+}
+
+.upg-item::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 2px;
+  background: var(--border2);
+  transition: background 0.15s;
+}
+
+.upg-item:hover { border-color: var(--border2); background: var(--bg3); }
+.upg-item.affordable::before { background: var(--green); }
+.upg-item.affordable { border-color: rgba(0,255,136,0.2); }
+.upg-item.affordable:hover { border-color: rgba(0,255,136,0.5); background: rgba(0,255,136,0.04); }
+.upg-item.maxed { opacity: 0.4; cursor: not-allowed; }
+.upg-item.maxed::before { background: var(--text3); }
+
+.upg-icon { font-size: 22px; width: 32px; text-align: center; flex-shrink: 0; }
+.upg-info { flex: 1; min-width: 0; }
+.upg-name { font-size: 14px; font-weight: 700; color: var(--text); }
+.upg-desc { font-size: 12px; color: var(--text2); margin-top: 1px; }
+.upg-lvl { font-size: 10px; color: var(--text3); margin-top: 2px; font-family: 'Space Mono', monospace; }
+.upg-cost { font-family: 'Space Mono', monospace; font-size: 13px; color: var(--gold); font-weight: 700; white-space: nowrap; }
+.upg-cost.maxed-label { color: var(--green); font-size: 16px; }
+
+/* ===== MARKET CHART ===== */
+#chart-wrap {
+  background: var(--bg2);
+  border-radius: 8px;
+  overflow: hidden;
+  height: 100px;
+  margin: 10px 0;
+  border: 1px solid var(--border);
+  position: relative;
+}
+
+#market-canvas { display: block; width: 100%; height: 100%; }
+
+.price-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.price-big {
+  font-family: 'Space Mono', monospace;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.price-pct {
+  font-family: 'Space Mono', monospace;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 6px;
+}
+
+.price-pct.up { background: rgba(0,255,136,0.12); color: var(--green); }
+.price-pct.dn { background: rgba(255,68,102,0.12); color: var(--red); }
+
+/* ===== INVESTMENTS ===== */
+.invest-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 8px;
+  position: relative;
+}
+
+.invest-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.invest-card-id {
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  color: var(--text3);
+  letter-spacing: 1px;
+}
+
+.invest-card-pnl {
+  font-family: 'Space Mono', monospace;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.invest-card-pnl.pos { color: var(--green); }
+.invest-card-pnl.neg { color: var(--red); }
+
+.invest-card-detail {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text2);
+  margin-bottom: 10px;
+}
+
+.invest-detail-item { display: flex; flex-direction: column; }
+.invest-detail-label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; }
+.invest-detail-val { font-family: 'Space Mono', monospace; font-size: 13px; color: var(--text); }
+
+.invest-bar-wrap { height: 4px; background: var(--bg4); border-radius: 4px; overflow: hidden; margin-bottom: 10px; }
+.invest-bar { height: 100%; border-radius: 4px; transition: width 1s; }
+
+/* ===== BUTTONS ===== */
+.btn {
+  background: var(--bg4);
+  color: var(--text);
+  border: 1px solid var(--border2);
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.15s;
+  letter-spacing: 0.5px;
+}
+
+.btn:hover { background: var(--border); border-color: var(--text3); }
+.btn:active { transform: scale(0.97); }
+.btn.green { background: rgba(0,255,136,0.1); border-color: var(--green2); color: var(--green); }
+.btn.green:hover { background: rgba(0,255,136,0.18); }
+.btn.red { background: rgba(255,68,102,0.1); border-color: var(--red2); color: var(--red); }
+.btn.red:hover { background: rgba(255,68,102,0.18); }
+.btn.gold { background: rgba(255,215,0,0.1); border-color: var(--gold2); color: var(--gold); }
+.btn.gold:hover { background: rgba(255,215,0,0.18); }
+.btn.purple { background: rgba(155,48,255,0.1); border-color: var(--purple2); color: var(--purple); }
+.btn.purple:hover { background: rgba(155,48,255,0.18); }
+.btn.full { width: 100%; }
+.btn.sm { padding: 5px 10px; font-size: 12px; }
+
+/* ===== INPUTS ===== */
+input[type=number], input[type=range], select {
+  width: 100%;
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  color: var(--text);
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-family: 'Space Mono', monospace;
+  font-size: 13px;
+  margin-top: 6px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+input[type=number]:focus, select:focus { border-color: var(--gold); }
+input[type=range] { padding: 4px 0; border: none; accent-color: var(--gold); }
+
+/* ===== RIGHT PANEL ===== */
+#right-panel {
+  background: var(--bg2);
+  border-left: 1px solid var(--border);
+  padding: 16px;
+  overflow-y: auto;
+  max-height: calc(100vh - 65px);
+  position: sticky;
+  top: 65px;
+}
+
+/* ===== BOOSTS ===== */
+.boost-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.boost-chip {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px;
+  cursor: pointer;
+  text-align: center;
+  font-size: 12px;
+  font-family: 'Space Mono', monospace;
+  color: var(--text2);
+  transition: all 0.15s;
+  line-height: 1.5;
+}
+
+.boost-chip:hover { border-color: var(--gold2); color: var(--gold); }
+.boost-chip.used { opacity: 0.3; cursor: not-allowed; }
+.boost-chip.active-boost { border-color: var(--green); color: var(--green); background: rgba(0,255,136,0.08); animation: boostPulse 1s infinite; }
+
+@keyframes boostPulse { 0%,100%{opacity:1} 50%{opacity:0.7} }
+
+/* ===== ACHIEVEMENTS ===== */
+.ach-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.ach-badge {
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid;
+  cursor: default;
+  transition: all 0.2s;
+  font-family: 'Space Mono', monospace;
+}
+
+.ach-badge.locked {
+  background: var(--bg2);
+  border-color: var(--border);
+  color: var(--text3);
+  filter: grayscale(1);
+}
+
+.ach-badge.unlocked {
+  background: rgba(0,255,136,0.1);
+  border-color: var(--green2);
+  color: var(--green);
+  box-shadow: 0 0 12px rgba(0,255,136,0.15);
+}
+
+/* ===== PRESTIGE ===== */
+.prestige-glow {
+  animation: pglow 1.5s infinite;
+}
+
+@keyframes pglow {
+  0%,100% { box-shadow: 0 0 10px rgba(155,48,255,0.4); }
+  50% { box-shadow: 0 0 30px rgba(155,48,255,0.8); }
+}
+
+/* ===== EVENTS LOG ===== */
+#events-log {
+  font-size: 12px;
+  font-family: 'Space Mono', monospace;
+  color: var(--text3);
+  line-height: 2;
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+#events-log div { border-bottom: 1px solid var(--border); padding: 2px 0; }
+#events-log div:last-child { border: none; }
+
+/* ===== FLOATING TEXT ===== */
+.float-text {
+  position: fixed;
+  pointer-events: none;
+  font-family: 'Space Mono', monospace;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--gold);
+  text-shadow: 0 0 10px rgba(255,215,0,0.5);
+  animation: floatUp 1.2s ease-out forwards;
+  z-index: 10000;
+}
+
+@keyframes floatUp {
+  0% { opacity: 1; transform: translateY(0) scale(1); }
+  50% { opacity: 1; transform: translateY(-40px) scale(1.1); }
+  100% { opacity: 0; transform: translateY(-90px) scale(0.8); }
+}
+
+/* ===== INVEST FORM ===== */
+.invest-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.range-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.range-val {
+  font-family: 'Space Mono', monospace;
+  font-size: 12px;
+  color: var(--gold);
+  white-space: nowrap;
+  min-width: 70px;
+  text-align: right;
+}
+
+/* ===== PROGRESS BAR ===== */
+.prog-wrap { height: 6px; background: var(--bg4); border-radius: 4px; overflow: hidden; margin: 6px 0; }
+.prog-bar { height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--gold2), var(--gold)); transition: width 0.5s; }
+
+/* ===== HACK EVENT BOX ===== */
+#hack-box {
+  border-radius: 8px;
+  padding: 10px;
+  font-size: 13px;
+  border: 1px solid var(--border);
+  background: var(--bg2);
+  text-align: center;
+  color: var(--text3);
+  font-family: 'Space Mono', monospace;
+}
+
+/* ===== PRESTIGE SCREEN ===== */
+#prestige-req-text { font-size: 12px; color: var(--text2); line-height: 1.8; margin-bottom: 10px; }
+.prestige-stars { color: var(--purple); font-size: 20px; margin: 4px 0; }
+
+/* ===== NOTIFICATION TOAST ===== */
+#toast {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  border-radius: 10px;
+  padding: 12px 18px;
+  font-family: 'Space Mono', monospace;
+  font-size: 13px;
+  color: var(--gold);
+  z-index: 9000;
+  transform: translateY(80px);
+  opacity: 0;
+  transition: all 0.3s;
+  max-width: 280px;
+}
+#toast.show { transform: translateY(0); opacity: 1; }
+
+/* ===== CASINO TAB ===== */
+.casino-section { margin-bottom: 16px; }
+
+.casino-game {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+  position: relative;
+  overflow: hidden;
+}
+
+.casino-game::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.casino-game:hover::before { opacity: 1; }
+
+.casino-title {
+  font-family: 'Space Mono', monospace;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--gold);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.casino-title .odds-badge {
+  font-size: 10px;
+  background: var(--bg4);
+  border: 1px solid var(--border2);
+  color: var(--text3);
+  padding: 2px 8px;
+  border-radius: 20px;
+  margin-left: auto;
+  letter-spacing: 1px;
+}
+
+.casino-bet-row {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 10px;
+  align-items: center;
+}
+
+.casino-bet-row input {
+  flex: 1;
+}
+
+.bet-quick {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.bet-quick-btn {
+  background: var(--bg4);
+  border: 1px solid var(--border2);
+  color: var(--text2);
+  padding: 3px 9px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  transition: all 0.15s;
+}
+
+.bet-quick-btn:hover { border-color: var(--gold2); color: var(--gold); }
+
+.casino-result {
+  min-height: 28px;
+  text-align: center;
+  font-family: 'Space Mono', monospace;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 6px;
+  border-radius: 8px;
+  margin-top: 10px;
+  transition: all 0.3s;
+}
+
+.casino-result.win { background: rgba(0,255,136,0.12); color: var(--green); border: 1px solid var(--green2); }
+.casino-result.lose { background: rgba(255,68,102,0.12); color: var(--red); border: 1px solid var(--red2); }
+.casino-result.neutral { background: var(--bg3); color: var(--text3); border: 1px solid var(--border); }
+
+/* Coin Flip */
+.coin-flip-area {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin: 10px 0;
+}
+
+.cf-choice {
+  flex: 1;
+  padding: 12px;
+  border-radius: 10px;
+  border: 2px solid var(--border);
+  cursor: pointer;
+  text-align: center;
+  font-size: 28px;
+  transition: all 0.15s;
+  background: var(--bg3);
+}
+
+.cf-choice:hover { border-color: var(--gold2); background: var(--bg4); transform: scale(1.05); }
+.cf-choice.selected { border-color: var(--gold); background: rgba(255,215,0,0.08); box-shadow: 0 0 15px rgba(255,215,0,0.2); }
+.cf-choice.winner { border-color: var(--green); background: rgba(0,255,136,0.12); }
+.cf-choice.loser { border-color: var(--red); opacity: 0.4; }
+
+.coin-flip-coin {
+  font-size: 52px;
+  text-align: center;
+  margin: 8px 0;
+  line-height: 1;
+  display: block;
+  min-height: 64px;
+}
+
+@keyframes coinFlipAnim {
+  0%   { transform: rotateY(0deg) scale(1); }
+  25%  { transform: rotateY(90deg) scale(0.8); }
+  50%  { transform: rotateY(180deg) scale(1); }
+  75%  { transform: rotateY(270deg) scale(0.8); }
+  100% { transform: rotateY(360deg) scale(1); }
+}
+
+.flipping { animation: coinFlipAnim 0.4s ease-in-out 4; }
+
+/* Dice */
+.dice-display {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin: 10px 0;
+  font-size: 40px;
+}
+
+@keyframes diceShake {
+  0%,100% { transform: rotate(0deg) scale(1); }
+  25% { transform: rotate(-15deg) scale(1.1); }
+  75% { transform: rotate(15deg) scale(1.1); }
+}
+
+.dice-rolling { animation: diceShake 0.15s ease-in-out 8; }
+
+.dice-choose-row {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.dice-target-btn {
+  background: var(--bg4);
+  border: 1px solid var(--border2);
+  color: var(--text2);
+  padding: 5px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: 'Space Mono', monospace;
+  font-size: 12px;
+  transition: all 0.15s;
+}
+
+.dice-target-btn:hover { border-color: var(--gold2); color: var(--gold); }
+.dice-target-btn.active { border-color: var(--gold); color: var(--gold); background: rgba(255,215,0,0.1); }
+
+/* Slots */
+.slot-machine {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin: 10px 0;
+}
+
+.slot-reel {
+  width: 64px;
+  height: 64px;
+  background: var(--bg);
+  border: 2px solid var(--border2);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36px;
+  overflow: hidden;
+  position: relative;
+}
+
+@keyframes slotSpin {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-200%); }
+}
+
+.slot-reel.spinning { animation: slotSpin 0.1s linear infinite; }
+.slot-reel.landing { animation: none; transition: transform 0.15s ease-out; }
+
+.slot-reel.jackpot {
+  border-color: var(--gold);
+  box-shadow: 0 0 20px rgba(255,215,0,0.4);
+  animation: jackpotGlow 0.5s infinite;
+}
+
+@keyframes jackpotGlow {
+  0%,100% { box-shadow: 0 0 15px rgba(255,215,0,0.4); }
+  50% { box-shadow: 0 0 35px rgba(255,215,0,0.9); }
+}
+
+.slot-payline {
+  font-size: 11px;
+  color: var(--text3);
+  font-family: 'Space Mono', monospace;
+  text-align: center;
+  margin-top: 6px;
+  line-height: 1.8;
+}
+
+/* Roulette */
+.roulette-wheel {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  margin: 0 auto 12px;
+  background: conic-gradient(
+    #c00 0deg 9.72deg, #1a1a1a 9.72deg 19.44deg, #c00 19.44deg 29.16deg,
+    #1a1a1a 29.16deg 38.88deg, #c00 38.88deg 48.6deg, #1a1a1a 48.6deg 58.32deg,
+    #c00 58.32deg 68.04deg, #1a1a1a 68.04deg 77.76deg, #c00 77.76deg 87.48deg,
+    #1a1a1a 87.48deg 97.2deg, #c00 97.2deg 106.92deg, #1a1a1a 106.92deg 116.64deg,
+    #c00 116.64deg 126.36deg, #1a1a1a 126.36deg 136.08deg, #c00 136.08deg 145.8deg,
+    #1a1a1a 145.8deg 155.52deg, #c00 155.52deg 165.24deg, #1a1a1a 165.24deg 174.96deg,
+    #007700 174.96deg 184.68deg,
+    #c00 184.68deg 194.4deg, #1a1a1a 194.4deg 204.12deg, #c00 204.12deg 213.84deg,
+    #1a1a1a 213.84deg 223.56deg, #c00 223.56deg 233.28deg, #1a1a1a 233.28deg 243deg,
+    #c00 243deg 252.72deg, #1a1a1a 252.72deg 262.44deg, #c00 262.44deg 272.16deg,
+    #1a1a1a 272.16deg 281.88deg, #c00 281.88deg 291.6deg, #1a1a1a 291.6deg 301.32deg,
+    #c00 301.32deg 311.04deg, #1a1a1a 311.04deg 320.76deg, #c00 320.76deg 330.48deg,
+    #1a1a1a 330.48deg 340.2deg, #c00 340.2deg 349.92deg, #1a1a1a 349.92deg 360deg
+  );
+  border: 4px solid var(--gold2);
+  box-shadow: 0 0 20px rgba(0,0,0,0.5), inset 0 0 10px rgba(0,0,0,0.5);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 2s cubic-bezier(0.17, 0.67, 0.35, 0.98);
+}
+
+.roulette-ball {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  background: white;
+  border-radius: 50%;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  box-shadow: 0 0 6px rgba(255,255,255,0.8);
+}
+
+.roulette-center {
+  width: 30px;
+  height: 30px;
+  background: var(--bg);
+  border-radius: 50%;
+  border: 2px solid var(--gold2);
+  z-index: 2;
+}
+
+.roulette-bets {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.roulette-bet-btn {
+  padding: 8px 4px;
+  border-radius: 8px;
+  border: 2px solid var(--border);
+  cursor: pointer;
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  text-align: center;
+  transition: all 0.15s;
+  background: var(--bg3);
+  color: var(--text2);
+}
+
+.roulette-bet-btn:hover { border-color: var(--border2); color: var(--text); }
+.roulette-bet-btn.selected { border-color: var(--gold); background: rgba(255,215,0,0.1); color: var(--gold); }
+.roulette-bet-btn.red-btn { border-color: #c00; }
+.roulette-bet-btn.red-btn.selected { background: rgba(200,0,0,0.15); color: #ff6666; border-color: #ff4466; }
+.roulette-bet-btn.green-btn { border-color: #007700; }
+.roulette-bet-btn.green-btn.selected { background: rgba(0,150,0,0.15); color: var(--green); border-color: var(--green2); }
+.roulette-bet-btn.black-btn { border-color: var(--border2); }
+.roulette-bet-btn.black-btn.selected { background: rgba(150,150,150,0.1); color: var(--text); border-color: var(--text2); }
+
+/* Crash Game */
+.crash-chart-wrap {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  height: 120px;
+  position: relative;
+  overflow: hidden;
+  margin: 10px 0;
+}
+
+#crash-canvas { display: block; width: 100%; height: 100%; }
+
+.crash-multiplier {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-family: 'Space Mono', monospace;
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--green);
+  text-shadow: 0 0 20px rgba(0,255,136,0.5);
+  pointer-events: none;
+  transition: color 0.2s;
+}
+
+.crash-multiplier.danger { color: var(--orange); text-shadow: 0 0 20px rgba(255,136,0,0.5); }
+.crash-multiplier.crashed { color: var(--red); text-shadow: 0 0 20px rgba(255,68,102,0.5); }
+
+.crash-controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.crash-history {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.crash-hist-chip {
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-weight: 700;
+}
+
+.crash-hist-chip.low { background: rgba(255,68,102,0.15); color: var(--red); }
+.crash-hist-chip.med { background: rgba(255,136,0,0.15); color: var(--orange); }
+.crash-hist-chip.high { background: rgba(0,255,136,0.15); color: var(--green); }
+
+/* Casino stats bar */
+.casino-stats-bar {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.casino-stat {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px;
+  text-align: center;
+}
+
+.casino-stat-label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 1px; }
+.casino-stat-val { font-size: 16px; font-weight: 700; font-family: 'Space Mono', monospace; color: var(--gold); }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="logo">CRYPTO<span>₿</span>CLICKER</div>
+  <div id="money-display">₿ 0</div>
+  <div class="header-stats">
+    <div class="header-stat">
+      <div class="header-stat-label">Per Click</div>
+      <div class="header-stat-val" id="hdr-click">1</div>
+    </div>
+    <div class="header-stat">
+      <div class="header-stat-label">Per Second</div>
+      <div class="header-stat-val" id="hdr-ps">0</div>
+    </div>
+    <div class="header-stat">
+      <div class="header-stat-label">Total Earned</div>
+      <div class="header-stat-val" id="hdr-total">0</div>
+    </div>
+    <div class="header-stat">
+      <div class="header-stat-label">Prestige</div>
+      <div class="header-stat-val" id="hdr-prestige" style="color:var(--purple)">×1.0</div>
+    </div>
+  </div>
+</header>
+
+<!-- EVENT BANNER -->
+<div id="event-banner"></div>
+
+<main>
+<!-- ===== LEFT PANEL ===== -->
+<div id="left-panel">
+
+  <!-- Coin -->
+  <div id="coin-wrap">
+    <div class="coin-ring"></div>
+    <div class="coin-ring"></div>
+    <div class="coin-ring"></div>
+    <button id="coin-btn">
+      <div id="coin-face">₿</div>
+    </button>
+  </div>
+
+  <div id="msg"></div>
+  <div id="boost-display"></div>
+
+  <!-- Mini stats -->
+  <div class="stat-grid">
+    <div class="stat-box">
+      <div class="stat-box-label">Miners</div>
+      <div class="stat-box-val" id="st-miners">0</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-box-label">Click Lv</div>
+      <div class="stat-box-val" id="st-clvl">1</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-box-label">Streak</div>
+      <div class="stat-box-val" id="st-streak">0🔥</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-box-label">Positions</div>
+      <div class="stat-box-val" id="st-positions">0/5</div>
+    </div>
+  </div>
+
+  <!-- Miner visual -->
+  <div class="panel" style="width:100%; padding:10px;">
+    <div class="panel-title">Miner Fleet</div>
+    <div id="miner-visual"></div>
+    <div style="font-size:11px;color:var(--text3);margin-top:6px;font-family:'Space Mono',monospace" id="miner-rate"></div>
+  </div>
+
+  <!-- Stats -->
+  <div class="panel" style="width:100%">
+    <div class="panel-title">Statistics</div>
+    <div style="font-size:12px;color:var(--text2);line-height:2.2;font-family:'Space Mono',monospace">
+      Total Clicks: <span style="color:var(--text)" id="st-tclicks">0</span><br>
+      Best /s: <span style="color:var(--text)" id="st-bestps">0</span><br>
+      Invest wins: <span style="color:var(--green)" id="st-wins">0</span><br>
+      Invest losses: <span style="color:var(--red)" id="st-losses">0</span><br>
+      Net P&L: <span id="st-pnl">0</span>
+    </div>
+  </div>
+
+</div>
+
+<!-- ===== CENTER PANEL ===== -->
+<div id="center-panel">
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('upgrades')">Upgrades</button>
+    <button class="tab" onclick="switchTab('market')">Market</button>
+    <button class="tab" onclick="switchTab('invest')">Invest</button>
+    <button class="tab" onclick="switchTab('casino')">🎰 Casino</button>
+    <button class="tab" onclick="switchTab('achieve')">Trophies</button>
+  </div>
+
+  <!-- UPGRADES TAB -->
+  <div id="tab-upgrades" class="tab-content active">
+    <div class="panel">
+      <div class="panel-title">Buy Miners <span class="panel-badge" id="miner-cost-badge">100</span></div>
+      <div id="miner-buy-item" class="upg-item">
+        <div class="upg-icon">⛏️</div>
+        <div class="upg-info">
+          <div class="upg-name">Hire Miner</div>
+          <div class="upg-desc">Generates coins every second</div>
+          <div class="upg-lvl" id="miner-owned-label">Owned: 0</div>
+        </div>
+        <div class="upg-cost" id="miner-cost-label">100</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Click Power</div>
+      <div id="click-upgrades"></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Mining Power</div>
+      <div id="mine-upgrades"></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Special</div>
+      <div id="special-upgrades"></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Market Tools</div>
+      <div id="market-upgrades"></div>
+    </div>
+  </div>
+
+  <!-- MARKET TAB -->
+  <div id="tab-market" class="tab-content">
+    <div class="panel">
+      <div class="panel-title">BTC / USD Live</div>
+      <div class="price-row">
+        <div class="price-big" id="price-display">$100.00</div>
+        <div class="price-pct up" id="price-pct">+0.00%</div>
+      </div>
+      <div id="chart-wrap"><canvas id="market-canvas"></canvas></div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3);font-family:'Space Mono',monospace;margin-top:4px">
+        <span>24h Low: <span id="price-low" style="color:var(--red)">—</span></span>
+        <span id="market-event-label" style="color:var(--orange)"></span>
+        <span>24h High: <span id="price-high" style="color:var(--green)">—</span></span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Market Sentiment</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;text-align:center;font-size:13px;font-family:'Space Mono',monospace">
+        <div>
+          <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Fear Index</div>
+          <div id="fear-idx" style="font-size:22px;color:var(--red)">50</div>
+        </div>
+        <div>
+          <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Trend</div>
+          <div id="trend-arrow" style="font-size:22px">→</div>
+        </div>
+        <div>
+          <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Volatility</div>
+          <div id="volatility" style="font-size:22px;color:var(--orange)">MED</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Market Events Log</div>
+      <div id="events-log"><div>Game started. Watching markets…</div></div>
+    </div>
+  </div>
+
+  <!-- INVEST TAB -->
+  <div id="tab-invest" class="tab-content">
+
+    <div class="panel" id="invest-lock-panel" style="display:block">
+      <div class="panel-title">🔒 Investing Locked</div>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:12px;line-height:1.7">
+        Unlock the investment desk to open multiple positions simultaneously.<br>
+        Buy low, sell high, and watch the market.
+      </p>
+      <button class="btn gold full" onclick="tryUnlockInvesting()">Unlock Investing — ₿1,000</button>
+    </div>
+
+    <div id="invest-open-panel" style="display:none">
+      <div class="panel">
+        <div class="panel-title">Open New Position <span class="panel-badge" id="positions-badge">0/5</span></div>
+        <div style="font-size:13px;color:var(--text2);margin-bottom:10px">BTC @ <span id="open-price" style="color:var(--gold);font-family:'Space Mono',monospace">$100.00</span></div>
+
+        <div class="range-row">
+          <input type="range" id="invest-slider" min="1" max="100" value="25" step="1">
+          <div class="range-val" id="invest-slider-val">25%</div>
+        </div>
+        <div style="font-size:12px;color:var(--text3);font-family:'Space Mono',monospace;margin-top:4px">
+          Amount: <span id="invest-amount-preview" style="color:var(--gold)">—</span>
+        </div>
+
+        <div style="margin-top:8px;display:flex;align-items:center;gap:8px">
+          <select id="leverage-select">
+            <option value="1">1× (no leverage)</option>
+            <option value="2">2× leverage</option>
+            <option value="5">5× leverage</option>
+            <option value="10">10× leverage (risky!)</option>
+          </select>
+          <div style="font-size:11px;color:var(--text3);white-space:nowrap">Leverage</div>
+        </div>
+
+        <div style="margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <button class="btn green" onclick="openPosition('long')">📈 Long (Buy)</button>
+          <button class="btn red" onclick="openPosition('short')">📉 Short (Sell)</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">Open Positions <span class="panel-badge" id="positions-count">0</span></div>
+        <div id="positions-list"><div style="color:var(--text3);font-size:13px;font-family:'Space Mono',monospace">No open positions</div></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">Closed Positions History</div>
+        <div id="history-list" style="font-size:12px;font-family:'Space Mono',monospace;color:var(--text3);max-height:200px;overflow-y:auto">
+          <div>No history yet</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CASINO TAB -->
+  <div id="tab-casino" class="tab-content">
+
+    <!-- Casino Stats -->
+    <div class="casino-stats-bar">
+      <div class="casino-stat">
+        <div class="casino-stat-label">Casino Wins</div>
+        <div class="casino-stat-val" id="cas-wins">0</div>
+      </div>
+      <div class="casino-stat">
+        <div class="casino-stat-label">Casino Losses</div>
+        <div class="casino-stat-val" id="cas-losses" style="color:var(--red)">0</div>
+      </div>
+      <div class="casino-stat">
+        <div class="casino-stat-label">Net P&L</div>
+        <div class="casino-stat-val" id="cas-pnl">0</div>
+      </div>
+    </div>
+
+    <!-- COIN FLIP -->
+    <div class="casino-game">
+      <div class="casino-title">🪙 Coin Flip <span class="odds-badge">2× payout</span></div>
+      <div class="bet-quick">
+        <button class="bet-quick-btn" onclick="setCasinoBet('coinflip',10)">10</button>
+        <button class="bet-quick-btn" onclick="setCasinoBet('coinflip',100)">100</button>
+        <button class="bet-quick-btn" onclick="setCasinoBet('coinflip',1000)">1K</button>
+        <button class="bet-quick-btn" onclick="setCasinoBet('coinflip', Math.floor(G.amount*0.1))">10%</button>
+        <button class="bet-quick-btn" onclick="setCasinoBet('coinflip', Math.floor(G.amount*0.5))">50%</button>
+        <button class="bet-quick-btn" onclick="setCasinoBet('coinflip', G.amount)">MAX</button>
+      </div>
+      <div class="casino-bet-row">
+        <input type="number" id="cf-bet" placeholder="Bet amount" min="1" value="10">
+      </div>
+      <div class="coin-flip-area">
+        <div class="cf-choice" id="cf-heads" onclick="selectCoinSide('heads')">🟡<br><small style="font-size:11px;font-family:'Space Mono',monospace">HEADS</small></div>
+        <div class="cf-choice" id="cf-tails" onclick="selectCoinSide('tails')">⚫<br><small style="font-size:11px;font-family:'Space Mono',monospace">TAILS</small></div>
+      </div>
+      <div class="coin-flip-coin" id="cf-coin">🪙</div>
+      <button class="btn gold full" onclick="playCoinFlip()">FLIP COIN</button>
+      <div class="casino-result neutral" id="cf-result">Pick heads or tails, place your bet!</div>
+    </div>
+
+    <!-- DICE DUEL -->
+    <div class="casino-game">
+      <div class="casino-title">🎲 Dice Duel <span class="odds-badge">beat the house</span></div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:8px;font-family:'Space Mono',monospace">Roll higher than the house. Exact match = push (bet back).</div>
+      <div class="bet-quick">
+        <button class="bet-quick-btn" onclick="setCasinoBet('dice',10)">10</button>
+        <button class="bet-quick-btn" onclick="setCasinoBet('dice',100)">100</button>
+        <button class="bet-quick-btn" onclick="setCasinoBet('dice',1000)">1K</button>
+        <button class="bet-quick-btn" onclick="setCasinoBet('dice', Math.floor(G.amount*0.25))">25%</button>
+        <button class="bet-quick-btn" onclick="setCasinoBet('dice', G.amount)">MAX</button>
+      </div>
+      <div class="casino-bet-row">
+        <input type="number" id="dice-bet" placeholder="Bet amount" min="1" value="10">
+      </div>
+      <div class="dice-display">
+        <div id="dice-you" style="filter: drop-shadow(0 0 8px rgba(255,215,0,0.3))">🎲</div>
+        <div style="font-size:20px;align-self:center;color:var(--text3);font-family:'Space Mono',monospace">vs</div>
+        <div id="dice-house" style="filter: drop-shadow(0 0 8px rgba(255,68,102,0.3))">🎲</div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3);font-family:'Space Mono',monospace;margin-bottom:8px">
+        <span>YOU</span><span>HOUSE</span>
+      </div>
+      <button class="btn gold full" onclick="playDice()">ROLL DICE</button>
+      <div class="casino-result neutral" id="dice-result">Roll the dice and beat the house!</div>
+    </div>
+
+    <!-- SLOTS -->
+    <div class="casino-game">
+      <div class="casino-title">🎰 Slot Machine <span class="odds-badge">up to 50× jackpot</span></div>
+      <div class="bet-quick">
+        <button class="bet-quick-btn" onclick="setCasinoBet('slots',10)">10</button>
+        <button class="bet-quick-btn" onclick="setCasinoBet('slots',100)">100</button>
+        <button class="bet-quick-btn" onclick="setCasinoBet('slots',1000)">1K</button>
+        <button class="bet-quick-btn" onclick="setCasinoBet('slots', Math.floor(G.amount*0.1))">10%</button>
+        <button class="bet-quick-btn" onclick="setCasinoBet('slots', G.amount)">MAX</button>
+      </div>
+      <div class="casino-bet-row">
+        <input type="number" id="slots-bet" placeholder="Bet amount" min="1" value="10">
+      </div>
+      <div class="slot-machine">
+        <div class="slot-reel" id="slot-1">🍋</div>
+        <div class="slot-reel" id="slot-2">🍊</div>
+        <div class="slot-reel" id="slot-3">🍇</div>
+      </div>
+      <div class="slot-payline" id="slot-payline">
+        💎💎💎 JACKPOT = 50× &nbsp;|&nbsp; ₿₿₿ = 25× &nbsp;|&nbsp; 🍒🍒🍒 = 10× &nbsp;|&nbsp; 2 matching = 2×
+      </div>
+      <button class="btn gold full" onclick="playSlots()" id="slots-btn">🎰 SPIN!</button>
+      <div class="casino-result neutral" id="slots-result">Spin to win!</div>
+    </div>
+
+    <!-- ROULETTE -->
+    <div class="casino-game">
+      <div class="casino-title">🎡 Roulette <span class="odds-badge">up to 35× payout</span></div>
+      <div class="roulette-wheel" id="roulette-wheel">
+        <div class="roulette-ball" id="roulette-ball"></div>
+        <div class="roulette-center"></div>
+      </div>
+      <div style="text-align:center;font-family:'Space Mono',monospace;font-size:20px;font-weight:700;margin-bottom:10px" id="roulette-number">—</div>
+      <div class="roulette-bets">
+        <div class="roulette-bet-btn red-btn" onclick="selectRoulette('red')" id="rb-red">🔴 Red<br><small>2×</small></div>
+        <div class="roulette-bet-btn black-btn" onclick="selectRoulette('black')" id="rb-black">⚫ Black<br><small>2×</small></div>
+        <div class="roulette-bet-btn green-btn" onclick="selectRoulette('zero')" id="rb-zero">🟢 Zero<br><small>35×</small></div>
+        <div class="roulette-bet-btn" onclick="selectRoulette('odd')" id="rb-odd">ODD<br><small>2×</small></div>
+        <div class="roulette-bet-btn" onclick="selectRoulette('even')" id="rb-even">EVEN<br><small>2×</small></div>
+        <div class="roulette-bet-btn" onclick="selectRoulette('high')" id="rb-high">19-36<br><small>2×</small></div>
+      </div>
+      <div class="bet-quick">
+        <button class="bet-quick-btn" onclick="setCasinoBet('roulette',10)">10</button>
+        <button class="bet-quick-btn" onclick="setCasinoBet('roulette',100)">100</button>
+        <button class="bet-quick-btn" onclick="setCasinoBet('roulette',1000)">1K</button>
+        <button class="bet-quick-btn" onclick="setCasinoBet('roulette', Math.floor(G.amount*0.25))">25%</button>
+        <button class="bet-quick-btn" onclick="setCasinoBet('roulette', G.amount)">MAX</button>
+      </div>
+      <div class="casino-bet-row">
+        <input type="number" id="roulette-bet" placeholder="Bet amount" min="1" value="10">
+      </div>
+      <button class="btn gold full" onclick="playRoulette()" id="roulette-btn">SPIN THE WHEEL</button>
+      <div class="casino-result neutral" id="roulette-result">Choose a bet type, then spin!</div>
+    </div>
+
+    <!-- CRASH -->
+    <div class="casino-game">
+      <div class="casino-title">🚀 Crash <span class="odds-badge">cash out before crash!</span></div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:8px;font-family:'Space Mono',monospace">Multiplier climbs until it crashes. Cash out in time or lose it all!</div>
+      <div class="crash-chart-wrap">
+        <canvas id="crash-canvas"></canvas>
+        <div class="crash-multiplier" id="crash-mult">1.00×</div>
+      </div>
+      <div class="crash-history" id="crash-history"></div>
+      <div class="bet-quick" style="margin-top:8px">
+        <button class="bet-quick-btn" onclick="setCasinoBet('crash',10)">10</button>
+        <button class="bet-quick-btn" onclick="setCasinoBet('crash',100)">100</button>
+        <button class="bet-quick-btn" onclick="setCasinoBet('crash',1000)">1K</button>
+        <button class="bet-quick-btn" onclick="setCasinoBet('crash', Math.floor(G.amount*0.25))">25%</button>
+        <button class="bet-quick-btn" onclick="setCasinoBet('crash', G.amount)">MAX</button>
+      </div>
+      <div class="casino-bet-row">
+        <input type="number" id="crash-bet" placeholder="Bet amount" min="1" value="10">
+      </div>
+      <div class="crash-controls">
+        <button class="btn green" onclick="startCrash()" id="crash-start-btn">🚀 START</button>
+        <button class="btn red" onclick="cashOutCrash()" id="crash-cashout-btn" disabled>💰 CASH OUT</button>
+      </div>
+      <div class="casino-result neutral" id="crash-result">Place your bet and launch the rocket!</div>
+    </div>
+
+  </div>
+
+  <!-- ACHIEVEMENTS TAB -->
+  <div id="tab-achieve" class="tab-content">
+    <div class="panel">
+      <div class="panel-title">Achievements <span class="panel-badge" id="ach-count">0/0</span></div>
+      <div class="ach-grid" id="ach-grid"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">Leaderboard (Session)</div>
+      <div style="font-size:12px;font-family:'Space Mono',monospace;color:var(--text2);line-height:2">
+        Peak Balance: <span style="color:var(--gold)" id="lb-peak">0</span><br>
+        Peak Miners: <span style="color:var(--gold)" id="lb-miners">0</span><br>
+        Best Position P&L: <span style="color:var(--green)" id="lb-bestpnl">0</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ===== RIGHT PANEL ===== -->
+<div id="right-panel">
+
+  <!-- Daily Boosts -->
+  <div class="panel">
+    <div class="panel-title">Daily Boosts</div>
+    <div class="boost-grid" id="boost-grid"></div>
+  </div>
+
+  <!-- Active Boost Timer -->
+  <div id="boost-timer-panel" class="panel" style="display:none">
+    <div class="panel-title">Boost Active</div>
+    <div id="boost-timer-text" style="font-family:'Space Mono',monospace;font-size:13px;color:var(--green);text-align:center"></div>
+    <div class="prog-wrap" style="margin-top:8px"><div class="prog-bar" id="boost-timer-bar"></div></div>
+  </div>
+
+  <!-- Prestige -->
+  <div class="panel">
+    <div class="panel-title">Prestige System</div>
+    <div class="prestige-stars" id="prestige-stars">—</div>
+    <div id="prestige-req-text"></div>
+    <div class="prog-wrap"><div class="prog-bar" id="prestige-prog" style="background:linear-gradient(90deg,var(--purple2),var(--purple))"></div></div>
+    <div id="prestige-next-mult" style="font-size:12px;color:var(--purple);margin-bottom:8px;font-family:'Space Mono',monospace"></div>
+    <button class="btn purple full" id="prestige-btn" onclick="tryPrestige()" style="display:none">⚡ Prestige Now</button>
+    <div id="prestige-locked-text" style="font-size:12px;color:var(--text3);font-family:'Space Mono',monospace">Earn more to unlock</div>
+  </div>
+
+  <!-- Market Event -->
+  <div class="panel">
+    <div class="panel-title">Active Event</div>
+    <div id="hack-box">Market is calm…</div>
+  </div>
+
+  <!-- Event Log -->
+  <div class="panel">
+    <div class="panel-title">Activity Feed</div>
+    <div id="events-log2" style="font-size:11px;font-family:'Space Mono',monospace;color:var(--text3);line-height:1.8;max-height:200px;overflow-y:auto"></div>
+  </div>
+
+</div>
+</main>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<script>
+// =============================================================
+// GAME STATE
+// =============================================================
+const G = {
+  amount: 0,
+  clickPower: 1,
+  minerPower: 1,
+  miners: 0,
+  totalEarned: 0,
+  totalClicks: 0,
+  bestPS: 0,
+  clickStreak: 0,
+  lastClickTime: 0,
+  clickTimestamps: [],
+
+  minerCost: 100,
+  investingUnlocked: false,
+
+  prestige: 0,
+  prestigeMult: 1.0,
+
+  cryptoValue: 100,
+  priceHistory: Array(80).fill(100),
+  priceHigh: 100,
+  priceLow: 100,
+  lastPricePct: 0,
+  marketBias: 0,
+  volatilityLevel: 1,
+  fearIndex: 50,
+
+  positions: [],   // {id, type, entryPrice, amount, leverage, openTime}
+  positionIdCounter: 1,
+  MAX_POSITIONS: 5,
+
+  closedHistory: [],
+  totalWins: 0,
+  totalLosses: 0,
+  totalPnL: 0,
+  bestPositionPnL: 0,
+  peakBalance: 0,
+  peakMiners: 0,
+
+  boostMult: 1,
+  autoClickActive: false,
+  activeBoostId: null,
+  boostEndTime: 0,
+  boostStartTime: 0,
+  boostUsedToday: {},
+
+  marketStability: false,
+  insiderInfo: false,
+  autoClick: false,
+  clickBotActive: false,
+
+  eventActive: false,
+  eventEffect: 0,
+  eventEndTime: 0,
+
+  lastSave: Date.now(),
+  lastPlayed: Date.now(),
+  holdTimes: {},
+};
+
+// Upgrade purchased levels
+const BOUGHT = {};
+
+// =============================================================
+// UPGRADES
+// =============================================================
+const UPGRADES_CLICK = [
+  {id:'cu1', icon:'🖱️', name:'Better Mouse',   desc:'+5 click power',          cost:50,    effect:()=>{G.clickPower+=5},           maxLevel:1},
+  {id:'cu2', icon:'✋', name:'Golden Touch',    desc:'2× click power',          cost:300,   effect:()=>{G.clickPower*=2},            maxLevel:1},
+  {id:'cu3', icon:'🤖', name:'Click Bots',      desc:'3× click power',          cost:2000,  effect:()=>{G.clickPower*=3},            maxLevel:1},
+  {id:'cu4', icon:'⚡', name:'Turbo Fingers',   desc:'+50 click power',         cost:8000,  effect:()=>{G.clickPower+=50},           maxLevel:1},
+  {id:'cu5', icon:'⚛️', name:'Quantum Tap',     desc:'10× click power',         cost:50000, effect:()=>{G.clickPower*=10},           maxLevel:1},
+  {id:'cu6', icon:'🧠', name:'Neural Click',    desc:'100× click power',        cost:2000000,effect:()=>{G.clickPower*=100},         maxLevel:1},
+];
+
+const UPGRADES_MINE = [
+  {id:'mu1', icon:'🖥️', name:'GPU Rig',         desc:'2× miner output',         cost:500,   effect:()=>{G.minerPower*=2},            maxLevel:1},
+  {id:'mu2', icon:'❄️', name:'Overclocking',    desc:'2× miner output',         cost:4000,  effect:()=>{G.minerPower*=2},            maxLevel:1},
+  {id:'mu3', icon:'☀️', name:'Solar Array',     desc:'5× miner output',         cost:25000, effect:()=>{G.minerPower*=5},            maxLevel:1},
+  {id:'mu4', icon:'🔋', name:'ASIC Cluster',    desc:'10× miner output',        cost:200000,effect:()=>{G.minerPower*=10},           maxLevel:1},
+  {id:'mu5', icon:'🌐', name:'Data Center',     desc:'50× miner output',        cost:5000000,effect:()=>{G.minerPower*=50},          maxLevel:1},
+];
+
+const UPGRADES_SPECIAL = [
+  {id:'su1', icon:'⏩', name:'Auto-Clicker',    desc:'Clicks 5× per second',    cost:5000,  effect:()=>{G.autoClick=true},           maxLevel:1},
+  {id:'su2', icon:'⛏️', name:'Bulk Hire ×10',   desc:'Instantly hire 10 miners',cost:3000,  effect:()=>{G.miners+=10; G.minerCost=Math.floor(G.minerCost*Math.pow(1.4,10))}, maxLevel:999},
+  {id:'su3', icon:'🎰', name:'Lucky Click',     desc:'Random bonus on each click',cost:10000,effect:()=>{G.luckyClick=true},         maxLevel:1},
+  {id:'su4', icon:'🔄', name:'Compound Mine',   desc:'Miners earn on click too', cost:30000, effect:()=>{G.compoundMine=true},        maxLevel:1},
+];
+
+const UPGRADES_MARKET = [
+  {id:'mk1', icon:'📊', name:'Market Analyst',  desc:'Reduces bad volatility',  cost:8000,  effect:()=>{G.marketStability=true},     maxLevel:1},
+  {id:'mk2', icon:'🔍', name:'Insider Info',    desc:'Shows event predictions', cost:60000, effect:()=>{G.insiderInfo=true},         maxLevel:1},
+  {id:'mk3', icon:'📈', name:'Extra Slot',      desc:'+2 investment slots',     cost:50000, effect:()=>{G.MAX_POSITIONS+=2},         maxLevel:3},
+  {id:'mk4', icon:'🤝', name:'Trade Bot',       desc:'Auto-closes losers at -20%',cost:100000,effect:()=>{G.tradeBot=true},         maxLevel:1},
+  {id:'mk5', icon:'💹', name:'Leverage Master', desc:'Unlock 20× leverage',     cost:500000,effect:()=>{G.leverageMaster=true},      maxLevel:1},
+];
+
+;[...UPGRADES_CLICK,...UPGRADES_MINE,...UPGRADES_SPECIAL,...UPGRADES_MARKET].forEach(u=>{
+  u.currentCost = u.cost; BOUGHT[u.id] = 0;
+});
+
+// =============================================================
+// ACHIEVEMENTS
+// =============================================================
+const ACHIEVEMENTS = [
+  {id:'a1',  icon:'👆', name:'First Click',    check:()=>G.totalClicks>=1},
+  {id:'a2',  icon:'🖱️', name:'100 Clicks',     check:()=>G.totalClicks>=100},
+  {id:'a3',  icon:'💰', name:'First 1K',       check:()=>G.totalEarned>=1000},
+  {id:'a4',  icon:'💎', name:'10K Club',       check:()=>G.totalEarned>=10000},
+  {id:'a5',  icon:'🤑', name:'Millionaire',    check:()=>G.totalEarned>=1000000},
+  {id:'a6',  icon:'🏦', name:'Billionaire',    check:()=>G.totalEarned>=1e9},
+  {id:'a7',  icon:'⛏️', name:'10 Miners',      check:()=>G.miners>=10},
+  {id:'a8',  icon:'🏭', name:'50 Miners',      check:()=>G.miners>=50},
+  {id:'a9',  icon:'🌍', name:'100 Miners',     check:()=>G.miners>=100},
+  {id:'a10', icon:'📊', name:'Investor',       check:()=>G.investingUnlocked},
+  {id:'a11', icon:'🐋', name:'Whale',          check:()=>G.positions.some(p=>p.amount>=10000)||G.closedHistory.some(p=>p.amount>=10000)},
+  {id:'a12', icon:'⚡', name:'Prestige I',     check:()=>G.prestige>=1},
+  {id:'a13', icon:'👑', name:'Prestige III',   check:()=>G.prestige>=3},
+  {id:'a14', icon:'🔥', name:'Streak 10',      check:()=>G.clickStreak>=10},
+  {id:'a15', icon:'💹', name:'First Win',      check:()=>G.totalWins>=1},
+  {id:'a16', icon:'📈', name:'5 Wins',         check:()=>G.totalWins>=5},
+  {id:'a17', icon:'🎰', name:'Jackpot!',       check:()=>G.biggestLuckyClick>=(G.clickPower*50)},
+  {id:'a18', icon:'🤖', name:'Automation',     check:()=>G.autoClick||G.clickBotActive},
+  {id:'a19', icon:'🔬', name:'Analyst',        check:()=>G.marketStability},
+  {id:'a20', icon:'🌌', name:'Prestige V',     check:()=>G.prestige>=5},
+];
+
+// =============================================================
+// MARKET EVENTS
+// =============================================================
+const MARKET_EVENTS = [
+  {name:'🚀 Bull Run',        desc:'Market surging! Prices rocketing up',  effect:+35, duration:15000, color:'var(--green)', bias:+20},
+  {name:'🐻 Bear Attack',     desc:'Panic selling across the board',       effect:-30, duration:12000, color:'var(--red)',   bias:-20},
+  {name:'🐳 Whale Dump',      desc:'A whale is dumping EVERYTHING',        effect:-50, duration:10000, color:'var(--red)',   bias:-30},
+  {name:'📰 ETF Approved',    desc:'Government approves crypto ETF!',      effect:+45, duration:18000, color:'var(--green)', bias:+25},
+  {name:'💀 Exchange Hack',   desc:'Major exchange got compromised!',      effect:-40, duration:12000, color:'var(--red)',   bias:-25},
+  {name:'🐦 Influencer Post', desc:'Elon posted "₿" on Twitter',          effect:+60, duration:8000,  color:'var(--gold)',  bias:+15},
+  {name:'💰 Halving Event',   desc:'Bitcoin halving is happening!',        effect:+55, duration:20000, color:'var(--green)', bias:+30},
+  {name:'🏛️ Bank Bans Crypto',desc:'Central bank restricts trading',      effect:-35, duration:14000, color:'var(--red)',   bias:-20},
+  {name:'🎲 Market Chaos',    desc:'Random volatility spike',              effect:0,   duration:10000, color:'var(--orange)',bias:0, volatilityBoost:true},
+];
+
+// =============================================================
+// DAILY BOOSTS
+// =============================================================
+const BOOST_DEFS = [
+  {id:'b1', label:'⚡ 2× Boost',    sub:'30 seconds', mult:2,  duration:30000, autoclick:false},
+  {id:'b2', label:'💥 5× Boost',    sub:'15 seconds', mult:5,  duration:15000, autoclick:false},
+  {id:'b3', label:'🤖 Auto-Click',  sub:'25 seconds', mult:1,  duration:25000, autoclick:true},
+  {id:'b4', label:'⛏️ Mine ×10',    sub:'20 seconds', mult:1,  duration:20000, mineBoost:true},
+];
+
+// =============================================================
+// UTILITIES
+// =============================================================
+const $ = id => document.getElementById(id);
+
+function fmt(n) {
+  if (isNaN(n) || n===null) return '0';
+  const abs = Math.abs(n);
+  let s;
+  if (abs >= 1e15) s = (n/1e15).toFixed(2)+'Q';
+  else if (abs >= 1e12) s = (n/1e12).toFixed(2)+'T';
+  else if (abs >= 1e9)  s = (n/1e9).toFixed(2)+'B';
+  else if (abs >= 1e6)  s = (n/1e6).toFixed(2)+'M';
+  else if (abs >= 1e3)  s = (n/1e3).toFixed(1)+'K';
+  else s = Math.floor(abs).toString();
+  return n < 0 ? '-'+s : s;
+}
+
+function fmtDollar(n) { return '$'+n.toFixed(2); }
+
+function showMsg(text, color='var(--orange)') {
+  const el = $('msg');
+  el.textContent = text;
+  el.style.color = color;
+  clearTimeout(el._t);
+  el._t = setTimeout(()=>{ el.textContent=''; }, 2500);
+}
+
+function toast(text) {
+  const el = $('toast');
+  el.textContent = text;
+  el.classList.add('show');
+  clearTimeout(el._t);
+  el._t = setTimeout(()=>el.classList.remove('show'), 3000);
+}
+
+function floatText(val, x, y) {
+  const el = document.createElement('div');
+  el.className = 'float-text';
+  el.textContent = '+'+fmt(val);
+  el.style.left = (x - 30)+'px';
+  el.style.top = (y - 20)+'px';
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(), 1200);
+}
+
+function logEvent(text) {
+  ['events-log','events-log2'].forEach(id=>{
+    const log = $(id);
+    const d = document.createElement('div');
+    const time = new Date().toLocaleTimeString('en',{hour:'2-digit',minute:'2-digit'});
+    d.textContent = time+' '+text;
+    log.insertBefore(d, log.firstChild);
+    while(log.children.length > 30) log.lastChild.remove();
+  });
+}
+
+// =============================================================
+// TAB SWITCHING
+// =============================================================
+function switchTab(name) {
+  const tabNames = ['upgrades','market','invest','casino','achieve'];
+  document.querySelectorAll('.tab').forEach((t,i)=>{
+    t.classList.toggle('active', tabNames[i]===name);
+  });
+  document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
+  $('tab-'+name).classList.add('active');
+}
+
+// =============================================================
+// UPGRADE RENDERING
+// =============================================================
+function renderUpgrades() {
+  function renderList(arr, containerId) {
+    const el = $(containerId); el.innerHTML = '';
+    arr.forEach(upg => {
+      const bought = BOUGHT[upg.id]||0;
+      const maxed = bought >= upg.maxLevel;
+      const canAfford = G.amount >= upg.currentCost && !maxed;
+      const div = document.createElement('div');
+      div.className = 'upg-item'+(maxed?' maxed':canAfford?' affordable':'');
+      div.innerHTML = `
+        <div class="upg-icon">${upg.icon}</div>
+        <div class="upg-info">
+          <div class="upg-name">${upg.name}</div>
+          <div class="upg-desc">${upg.desc}</div>
+          <div class="upg-lvl">${maxed?'PURCHASED':(bought>0?'×'+bought:'')}</div>
+        </div>
+        <div class="upg-cost ${maxed?'maxed-label':''}">${maxed?'✓':fmt(upg.currentCost)}</div>`;
+      if (!maxed) div.onclick = ()=>buyUpgrade(upg);
+      el.appendChild(div);
+    });
+  }
+  renderList(UPGRADES_CLICK, 'click-upgrades');
+  renderList(UPGRADES_MINE, 'mine-upgrades');
+  renderList(UPGRADES_SPECIAL, 'special-upgrades');
+  renderList(UPGRADES_MARKET, 'market-upgrades');
+
+  // miner buy item
+  const affordMiner = G.amount >= G.minerCost;
+  const minerItem = $('miner-buy-item');
+  minerItem.className = 'upg-item'+(affordMiner?' affordable':'');
+  $('miner-cost-label').textContent = fmt(G.minerCost);
+  $('miner-cost-badge').textContent = fmt(G.minerCost);
+  $('miner-owned-label').textContent = 'Owned: '+G.miners;
+}
+
+function buyUpgrade(upg) {
+  if (G.amount < upg.currentCost) { showMsg('Not enough ₿!'); return; }
+  G.amount -= upg.currentCost;
+  upg.effect();
+  BOUGHT[upg.id] = (BOUGHT[upg.id]||0)+1;
+  if (upg.id==='su2') upg.currentCost = Math.floor(upg.cost * Math.pow(1.6, BOUGHT[upg.id]));
+  else if (upg.id==='mk3') upg.currentCost = Math.floor(upg.cost * Math.pow(3, BOUGHT[upg.id]));
+  else upg.currentCost = Math.floor(upg.cost * Math.pow(2.5, BOUGHT[upg.id]));
+  showMsg(upg.name+' unlocked!', 'var(--green)');
+  logEvent('Bought: '+upg.name);
+  toast('🎉 '+upg.name+' unlocked!');
+  updateUI(); renderUpgrades(); checkAchievements();
+}
+
+// Miner buy
+$('miner-buy-item').onclick = ()=>{
+  if (G.amount < G.minerCost) { showMsg('Need '+fmt(G.minerCost)); return; }
+  G.amount -= G.minerCost;
+  G.miners++;
+  G.minerCost = Math.floor(G.minerCost * 1.4);
+  G.peakMiners = Math.max(G.peakMiners, G.miners);
+  showMsg('Miner hired!', 'var(--green)');
+  updateUI(); renderUpgrades(); checkAchievements();
+};
+
+// =============================================================
+// CLICKING
+// =============================================================
+$('coin-btn').addEventListener('click', e => {
+  const now = Date.now();
+  let earn = Math.ceil(G.clickPower * G.prestigeMult * G.boostMult);
+  if (G.boostMineActive) earn += Math.ceil(G.miners * G.minerPower * G.prestigeMult * G.boostMult);
+  if (G.compoundMine) earn += Math.ceil(G.miners * G.minerPower * 0.1);
+  if (G.luckyClick && Math.random() < 0.05) {
+    const bonus = earn * (Math.floor(Math.random()*9)+2);
+    earn += bonus;
+    G.biggestLuckyClick = Math.max(G.biggestLuckyClick||0, bonus);
+    floatText(bonus, e.clientX, e.clientY - 40);
+    showMsg('🎰 LUCKY CLICK! +'+fmt(bonus), 'var(--gold)');
+  }
+  G.amount += earn; G.totalEarned += earn; G.totalClicks++;
+  G.peakBalance = Math.max(G.peakBalance, G.amount);
+  floatText(earn, e.clientX, e.clientY);
+
+  G.clickTimestamps = G.clickTimestamps.filter(t=>now-t<2000);
+  G.clickTimestamps.push(now);
+  G.clickStreak = Math.max(G.clickStreak, G.clickTimestamps.length);
+  $('st-streak').textContent = G.clickTimestamps.length+'🔥';
+
+  updateUI(); renderUpgrades(); checkAchievements();
+});
+
+// =============================================================
+// PASSIVE INCOME
+// =============================================================
+setInterval(()=>{
+  const income = Math.ceil(G.miners * G.minerPower * G.prestigeMult * G.boostMult * (G.boostMineActive?10:1));
+  G.amount += income; G.totalEarned += income;
+  G.peakBalance = Math.max(G.peakBalance, G.amount);
+  G.bestPS = Math.max(G.bestPS, income);
+  updateUI();
+}, 1000);
+
+// Auto-clicker
+setInterval(()=>{
+  if (G.autoClick || G.autoClickActive) {
+    const earn = Math.ceil(G.clickPower * G.prestigeMult * G.boostMult * 5);
+    G.amount += earn; G.totalEarned += earn;
+  }
+}, 1000);
+
+// =============================================================
+// MARKET ENGINE
+// =============================================================
+const canvas = $('market-canvas');
+const ctx = canvas.getContext('2d');
+
+function resizeCanvas() {
+  canvas.width = canvas.parentElement.offsetWidth;
+  canvas.height = canvas.parentElement.offsetHeight;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+function drawChart() {
+  resizeCanvas();
+  const w = canvas.width, h = canvas.height;
+  ctx.clearRect(0, 0, w, h);
+  const prices = G.priceHistory;
+  const min = Math.min(...prices)*0.97;
+  const max = Math.max(...prices)*1.03;
+  const range = max - min || 1;
+
+  // Grid lines
+  ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+  ctx.lineWidth = 1;
+  for (let i=1; i<4; i++) {
+    const y = (i/4)*h;
+    ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke();
+  }
+
+  // Price line
+  ctx.beginPath();
+  prices.forEach((p,i)=>{
+    const x = (i/(prices.length-1))*w;
+    const y = h - ((p-min)/range)*(h-8)-4;
+    i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+  });
+  const isUp = G.lastPricePct >= 0;
+  ctx.strokeStyle = isUp ? '#00ff88' : '#ff4466';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Fill
+  ctx.lineTo(w, h); ctx.lineTo(0, h); ctx.closePath();
+  ctx.fillStyle = isUp ? 'rgba(0,255,136,0.06)' : 'rgba(255,68,102,0.06)';
+  ctx.fill();
+}
+
+setInterval(()=>{
+  let trend = (Math.random()*20)-10;
+  if (G.marketStability && trend < 0) trend *= 0.6;
+  trend += G.marketBias * 0.5;
+  if (G.eventActive && G.eventEffect !== 0) trend += G.eventEffect * (Math.random()*0.4+0.3);
+  const vol = G.volatilityLevel;
+  trend *= vol;
+
+  G.lastPricePct = trend/100;
+  G.cryptoValue += G.cryptoValue * G.lastPricePct;
+  if (G.cryptoValue < 0.5) G.cryptoValue = 0.5;
+  G.priceHistory.push(G.cryptoValue);
+  if (G.priceHistory.length > 80) G.priceHistory.shift();
+  G.priceHigh = Math.max(G.priceHigh, G.cryptoValue);
+  G.priceLow = Math.min(G.priceLow, G.cryptoValue);
+
+  // Fear index
+  const recentPrices = G.priceHistory.slice(-10);
+  const recentTrend = recentPrices[recentPrices.length-1] - recentPrices[0];
+  G.fearIndex = Math.max(0, Math.min(100, 50 - recentTrend/G.cryptoValue*500));
+
+  drawChart();
+  updateMarketUI();
+
+  // Trade bot: close losing positions
+  if (G.tradeBot) {
+    G.positions.forEach(pos=>{
+      const pnlPct = calcPnLPct(pos);
+      if (pnlPct <= -20) { closePosition(pos.id, true); }
+    });
+  }
+
+  // Update position P&Ls
+  updatePositionsUI();
+
+  // Random events
+  if (!G.eventActive && Math.random() < 0.04) triggerMarketEvent();
+}, 3000);
+
+function calcPnLPct(pos) {
+  const priceMoveRatio = (G.cryptoValue - pos.entryPrice) / pos.entryPrice;
+  const mult = pos.type==='long' ? priceMoveRatio : -priceMoveRatio;
+  return mult * pos.leverage * 100;
+}
+
+function calcCurrentValue(pos) {
+  const pnlPct = calcPnLPct(pos);
+  return pos.amount * (1 + pnlPct/100);
+}
+
+function updateMarketUI() {
+  $('price-display').textContent = fmtDollar(G.cryptoValue);
+  const pct = (G.lastPricePct*100).toFixed(2);
+  const pctEl = $('price-pct');
+  pctEl.textContent = (G.lastPricePct>=0?'+':'')+pct+'%';
+  pctEl.className = 'price-pct '+(G.lastPricePct>=0?'up':'dn');
+  $('price-low').textContent = fmtDollar(G.priceLow);
+  $('price-high').textContent = fmtDollar(G.priceHigh);
+  $('open-price').textContent = fmtDollar(G.cryptoValue);
+  $('fear-idx').textContent = Math.round(G.fearIndex);
+  $('fear-idx').style.color = G.fearIndex > 60 ? 'var(--red)' : G.fearIndex < 40 ? 'var(--green)' : 'var(--orange)';
+  $('trend-arrow').textContent = G.marketBias > 5 ? '↗' : G.marketBias < -5 ? '↘' : '→';
+  $('trend-arrow').style.color = G.marketBias > 0 ? 'var(--green)' : G.marketBias < 0 ? 'var(--red)' : 'var(--text2)';
+  const volStr = G.volatilityLevel > 1.5 ? 'HIGH' : G.volatilityLevel < 0.7 ? 'LOW' : 'MED';
+  $('volatility').textContent = volStr;
+  $('volatility').style.color = G.volatilityLevel > 1.5 ? 'var(--red)' : 'var(--orange)';
+
+  // invest slider preview
+  if (G.investingUnlocked) {
+    const pctVal = $('invest-slider').value/100;
+    $('invest-amount-preview').textContent = '₿'+fmt(G.amount*pctVal);
+  }
+}
+
+function triggerMarketEvent() {
+  const ev = MARKET_EVENTS[Math.floor(Math.random()*MARKET_EVENTS.length)];
+  G.eventActive = true;
+  G.eventEffect = ev.effect;
+  G.marketBias = ev.bias||0;
+  if (ev.volatilityBoost) G.volatilityLevel = 2.5; else G.volatilityLevel = ev.effect > 0 ? 1.3 : 1.5;
+  G.eventEndTime = Date.now() + ev.duration;
+
+  const banner = $('event-banner');
+  banner.style.display = 'block';
+  banner.style.background = ev.color==='var(--green)' ? 'rgba(0,170,85,0.15)' : ev.color==='var(--red)' ? 'rgba(170,34,51,0.15)' : 'rgba(180,120,0,0.15)';
+  banner.style.color = ev.color;
+  banner.style.borderColor = ev.color;
+  banner.textContent = ev.name+' — '+ev.desc;
+
+  $('market-event-label').textContent = ev.name;
+  $('hack-box').textContent = ev.name+'\n'+ev.desc;
+  $('hack-box').style.color = ev.color;
+  $('hack-box').style.borderColor = ev.color;
+
+  logEvent(ev.name+': '+ev.desc);
+
+  setTimeout(()=>{
+    G.eventActive = false; G.eventEffect = 0; G.marketBias = 0; G.volatilityLevel = 1;
+    banner.style.display = 'none';
+    $('market-event-label').textContent = '';
+    $('hack-box').textContent = 'Market is calm…';
+    $('hack-box').style.color = 'var(--text3)';
+    $('hack-box').style.borderColor = 'var(--border)';
+  }, ev.duration);
+}
+
+// =============================================================
+// INVESTING — MULTIPLE POSITIONS
+// =============================================================
+function tryUnlockInvesting() {
+  if (G.amount < 1000) { showMsg('Need ₿1,000'); return; }
+  G.amount -= 1000;
+  G.investingUnlocked = true;
+  $('invest-lock-panel').style.display = 'none';
+  $('invest-open-panel').style.display = 'block';
+  logEvent('💼 Investment desk unlocked!');
+  toast('💼 Investing unlocked!');
+  checkAchievements(); updateUI();
+}
+
+function openPosition(type) {
+  if (G.positions.length >= G.MAX_POSITIONS) { showMsg('Max '+G.MAX_POSITIONS+' positions!'); return; }
+  const pctVal = $('invest-slider').value/100;
+  const amount = G.amount * pctVal;
+  if (amount < 1) { showMsg('Not enough ₿'); return; }
+  const leverage = parseInt($('leverage-select').value);
+  if (!G.leverageMaster && leverage > 10) { showMsg('Unlock Leverage Master first'); return; }
+
+  G.amount -= amount;
+  const pos = {
+    id: G.positionIdCounter++,
+    type,
+    entryPrice: G.cryptoValue,
+    amount,
+    leverage,
+    openTime: Date.now(),
+  };
+  G.positions.push(pos);
+  G.holdTimes[pos.id] = 0;
+
+  logEvent(`${type==='long'?'📈':'📉'} Opened ${type} ₿${fmt(amount)} @${fmtDollar(G.cryptoValue)} ${leverage}×`);
+  showMsg(`Opened ${type} position!`, type==='long'?'var(--green)':'var(--red)');
+  updateUI(); updatePositionsUI(); checkAchievements();
+}
+
+function closePosition(id, auto=false) {
+  const idx = G.positions.findIndex(p=>p.id===id);
+  if (idx===-1) return;
+  const pos = G.positions[idx];
+  const currentVal = Math.max(0, calcCurrentValue(pos));
+  const pnl = currentVal - pos.amount;
+  G.amount += currentVal;
+  G.peakBalance = Math.max(G.peakBalance, G.amount);
+  G.positions.splice(idx, 1);
+
+  if (pnl >= 0) G.totalWins++; else G.totalLosses++;
+  G.totalPnL += pnl;
+  G.bestPositionPnL = Math.max(G.bestPositionPnL, pnl);
+
+  const holdSecs = Math.floor((Date.now() - pos.openTime)/1000);
+  G.closedHistory.unshift({...pos, closePrice:G.cryptoValue, pnl, holdSecs});
+  if (G.closedHistory.length > 20) G.closedHistory.pop();
+
+  const msg = auto?'🤖 Bot closed':'Closed';
+  logEvent(`${msg}: ${pos.type} P&L: ${pnl>=0?'+':''}${fmt(pnl)}`);
+  showMsg(`Position closed! ${pnl>=0?'+':''}${fmt(pnl)}`, pnl>=0?'var(--green)':'var(--red)');
+  if (pnl >= 1000) toast(`💰 Great trade! +${fmt(pnl)}`);
+  updateUI(); updatePositionsUI(); renderUpgrades(); checkAchievements();
+}
+
+function updatePositionsUI() {
+  if (!G.investingUnlocked) return;
+  const list = $('positions-list');
+  const cnt = $('positions-count');
+  const badge = $('positions-badge');
+  const slotBadge = $('st-positions');
+  cnt.textContent = G.positions.length;
+  badge.textContent = G.positions.length+'/'+G.MAX_POSITIONS;
+  slotBadge.textContent = G.positions.length+'/'+G.MAX_POSITIONS;
+
+  if (G.positions.length === 0) {
+    list.innerHTML = '<div style="color:var(--text3);font-size:13px;font-family:\'Space Mono\',monospace">No open positions</div>';
+  } else {
+    list.innerHTML = '';
+    G.positions.forEach(pos=>{
+      const currentVal = Math.max(0, calcCurrentValue(pos));
+      const pnl = currentVal - pos.amount;
+      const pnlPct = calcPnLPct(pos);
+      const pnlPctStr = (pnlPct>=0?'+':'')+pnlPct.toFixed(1)+'%';
+      const holdSecs = Math.floor((Date.now()-pos.openTime)/1000);
+      const isPos = pnl >= 0;
+      const barW = Math.max(0, Math.min(100, 50 + pnlPct/2));
+
+      const card = document.createElement('div');
+      card.className = 'invest-card';
+      card.style.borderColor = isPos ? 'rgba(0,255,136,0.25)' : 'rgba(255,68,102,0.25)';
+      card.innerHTML = `
+        <div class="invest-card-header">
+          <div class="invest-card-id">#${pos.id} ${pos.type.toUpperCase()} ${pos.leverage}×</div>
+          <div class="invest-card-pnl ${isPos?'pos':'neg'}">${pnl>=0?'+':''}${fmt(pnl)} (${pnlPctStr})</div>
+        </div>
+        <div class="invest-card-detail">
+          <div class="invest-detail-item"><div class="invest-detail-label">Invested</div><div class="invest-detail-val">₿${fmt(pos.amount)}</div></div>
+          <div class="invest-detail-item"><div class="invest-detail-label">Entry</div><div class="invest-detail-val">${fmtDollar(pos.entryPrice)}</div></div>
+          <div class="invest-detail-item"><div class="invest-detail-label">Hold</div><div class="invest-detail-val">${holdSecs}s</div></div>
+        </div>
+        <div class="invest-card-detail">
+          <div class="invest-detail-item"><div class="invest-detail-label">Current</div><div class="invest-detail-val" style="color:${isPos?'var(--green)':'var(--red)'}">₿${fmt(currentVal)}</div></div>
+          <div class="invest-detail-item"><div class="invest-detail-label">BTC Now</div><div class="invest-detail-val">${fmtDollar(G.cryptoValue)}</div></div>
+          <div class="invest-detail-item"><div class="invest-detail-label">Type</div><div class="invest-detail-val">${pos.type==='long'?'📈':'📉'}</div></div>
+        </div>
+        <div class="invest-bar-wrap"><div class="invest-bar" style="width:${barW}%;background:${isPos?'var(--green)':'var(--red)'}"></div></div>
+        <button class="btn ${isPos?'green':'red'} sm full" onclick="closePosition(${pos.id})">Close Position</button>`;
+      list.appendChild(card);
+    });
+  }
+
+  // History
+  const hist = $('history-list');
+  if (G.closedHistory.length === 0) {
+    hist.innerHTML = '<div>No history yet</div>';
+  } else {
+    hist.innerHTML = G.closedHistory.map(p=>{
+      const isPos = p.pnl >= 0;
+      return `<div style="color:${isPos?'var(--green)':'var(--red)'};padding:3px 0;border-bottom:1px solid var(--border)">
+        ${isPos?'▲':'▼'} ${p.type.toUpperCase()} ${p.leverage}× | ${isPos?'+':''}${fmt(p.pnl)} | ${p.holdSecs}s
+      </div>`;
+    }).join('');
+  }
+}
+
+// Hold time ticker
+setInterval(()=>{
+  G.positions.forEach(p=>{ G.holdTimes[p.id] = (G.holdTimes[p.id]||0)+1; });
+}, 1000);
+
+// =============================================================
+// BOOSTS
+// =============================================================
+function renderBoosts() {
+  const grid = $('boost-grid');
+  grid.innerHTML = '';
+  BOOST_DEFS.forEach(b=>{
+    const used = G.boostUsedToday[b.id];
+    const isActive = G.activeBoostId === b.id;
+    const chip = document.createElement('div');
+    chip.className = 'boost-chip'+(used?' used':'')+(isActive?' active-boost':'');
+    chip.innerHTML = `<div style="font-size:14px;font-weight:700">${b.label}</div><div style="font-size:10px;margin-top:2px">${b.sub}</div>`;
+    if (!used) chip.onclick = ()=>activateBoost(b);
+    grid.appendChild(chip);
+  });
+}
+
+function activateBoost(b) {
+  if (G.boostUsedToday[b.id]) { showMsg('Already used!'); return; }
+  G.boostUsedToday[b.id] = true;
+  G.boostMult = b.mult;
+  if (b.autoclick) G.autoClickActive = true;
+  if (b.mineBoost) G.boostMineActive = true;
+  G.activeBoostId = b.id;
+  G.boostStartTime = Date.now();
+  G.boostEndTime = Date.now() + b.duration;
+
+  $('boost-timer-panel').style.display = 'block';
+  logEvent('⚡ Boost: '+b.label);
+  toast('⚡ '+b.label+' activated!');
+  renderBoosts();
+
+  setTimeout(()=>{
+    G.boostMult = 1;
+    G.autoClickActive = false;
+    G.boostMineActive = false;
+    G.activeBoostId = null;
+    $('boost-timer-panel').style.display = 'none';
+    showMsg('Boost expired', 'var(--text2)');
+    renderBoosts();
+  }, b.duration);
+}
+
+// Boost timer bar
+setInterval(()=>{
+  if (G.activeBoostId && G.boostEndTime > 0) {
+    const elapsed = Date.now() - G.boostStartTime;
+    const total = G.boostEndTime - G.boostStartTime;
+    const rem = Math.max(0, Math.ceil((G.boostEndTime - Date.now())/1000));
+    const pct = Math.max(0, 100 - (elapsed/total)*100);
+    $('boost-timer-bar').style.width = pct+'%';
+    const b = BOOST_DEFS.find(x=>x.id===G.activeBoostId);
+    $('boost-timer-text').textContent = (b?b.label:'Boost')+' — '+rem+'s left';
+  }
+}, 250);
+
+// =============================================================
+// PRESTIGE
+// =============================================================
+function prestigeReq() {
+  return G.prestige === 0 ? 100000 : 100000 * Math.pow(5, G.prestige);
+}
+
+function tryPrestige() {
+  const req = prestigeReq();
+  if (G.totalEarned < req) { showMsg('Need '+fmt(req)+' total earned'); return; }
+  if (!confirm(`Prestige to level ${G.prestige+1}?\n\nAll progress resets, but you gain a permanent ×${(1+(G.prestige+1)*0.5).toFixed(1)} multiplier!`)) return;
+
+  G.prestige++;
+  G.prestigeMult = 1 + G.prestige * 0.5;
+  G.amount = 0; G.clickPower = 1; G.miners = 0;
+  G.totalEarned = 0; G.minerCost = 100; G.minerPower = 1;
+  G.investingUnlocked = false; G.autoClick = false;
+  G.marketStability = false; G.insiderInfo = false;
+  G.compoundMine = false; G.luckyClick = false;
+  G.tradeBot = false; G.leverageMaster = false;
+  G.positions = []; G.MAX_POSITIONS = 5;
+  G.boostUsedToday = {};
+
+  ;[...UPGRADES_CLICK,...UPGRADES_MINE,...UPGRADES_SPECIAL,...UPGRADES_MARKET].forEach(u=>{
+    u.currentCost = u.cost; BOUGHT[u.id] = 0;
+  });
+
+  $('invest-lock-panel').style.display = 'block';
+  $('invest-open-panel').style.display = 'none';
+
+  logEvent(`⚡ Prestige! Level ${G.prestige} — Mult ×${G.prestigeMult.toFixed(1)}`);
+  toast(`⚡ Prestige ${G.prestige}! Bonus ×${G.prestigeMult.toFixed(1)}`);
+  showMsg('Prestiged! ×'+G.prestigeMult.toFixed(1)+' bonus forever', 'var(--purple)');
+  renderBoosts(); updateUI(); renderUpgrades(); checkAchievements();
+}
+
+// =============================================================
+// ACHIEVEMENTS
+// =============================================================
+function checkAchievements() {
+  let unlocked = 0;
+  const grid = $('ach-grid');
+  grid.innerHTML = '';
+  ACHIEVEMENTS.forEach(a=>{
+    const done = a.check();
+    if (done) unlocked++;
+    const el = document.createElement('div');
+    el.className = 'ach-badge '+(done?'unlocked':'locked');
+    el.title = a.name;
+    el.textContent = a.icon+' '+a.name;
+    grid.appendChild(el);
+    if (done && !a._notified) {
+      a._notified = true;
+      toast('🏆 Achievement: '+a.icon+' '+a.name);
+    }
+  });
+  $('ach-count').textContent = unlocked+'/'+ACHIEVEMENTS.length;
+}
+
+// =============================================================
+// INVEST SLIDER
+// =============================================================
+$('invest-slider').addEventListener('input', ()=>{
+  const pct = $('invest-slider').value;
+  $('invest-slider-val').textContent = pct+'%';
+  $('invest-amount-preview').textContent = '₿'+fmt(G.amount*(pct/100));
+});
+
+// =============================================================
+// UI UPDATE
+// =============================================================
+function updateUI() {
+  const ps = Math.ceil(G.miners * G.minerPower * G.prestigeMult * G.boostMult * (G.boostMineActive?10:1));
+  const click = Math.ceil(G.clickPower * G.prestigeMult * G.boostMult);
+
+  $('money-display').textContent = '₿ '+fmt(G.amount);
+  $('hdr-click').textContent = fmt(click);
+  $('hdr-ps').textContent = fmt(ps);
+  $('hdr-total').textContent = fmt(G.totalEarned);
+  $('hdr-prestige').textContent = '×'+G.prestigeMult.toFixed(1);
+
+  $('st-miners').textContent = G.miners;
+  $('st-clvl').textContent = Math.max(1, Math.floor(Math.log2(G.clickPower+1))+1);
+  $('st-positions').textContent = G.positions.length+'/'+G.MAX_POSITIONS;
+  $('st-tclicks').textContent = fmt(G.totalClicks);
+  $('st-bestps').textContent = fmt(G.bestPS);
+  $('st-wins').textContent = G.totalWins;
+  $('st-losses').textContent = G.totalLosses;
+  $('st-pnl').textContent = (G.totalPnL>=0?'+':'')+fmt(G.totalPnL);
+  $('st-pnl').style.color = G.totalPnL>=0?'var(--green)':'var(--red)';
+
+  // Miner visual
+  const mv = $('miner-visual');
+  mv.innerHTML = '';
+  const show = Math.min(G.miners, 80);
+  for (let i=0; i<show; i++) {
+    const d = document.createElement('div');
+    d.className = 'mdot';
+    mv.appendChild(d);
+  }
+  $('miner-rate').textContent = G.miners > 0 ? `${G.miners}×${G.minerPower}×${G.prestigeMult.toFixed(1)} = ${fmt(G.miners*G.minerPower*G.prestigeMult)}/s` : 'No miners yet';
+
+  // Prestige
+  const req = prestigeReq();
+  const prog = Math.min(100, (G.totalEarned/req)*100);
+  $('prestige-prog').style.width = prog+'%';
+  $('prestige-stars').textContent = G.prestige > 0 ? '⭐'.repeat(G.prestige) : '—';
+  $('prestige-req-text').textContent = `Earned: ${fmt(G.totalEarned)} / ${fmt(req)}\nPrestige ${G.prestige+1} gives ×${(1+(G.prestige+1)*0.5).toFixed(1)}`;
+  $('prestige-next-mult').textContent = `Next: ×${(1+(G.prestige+1)*0.5).toFixed(1)} multiplier`;
+  const canPrestige = G.totalEarned >= req;
+  $('prestige-btn').style.display = canPrestige ? 'block' : 'none';
+  $('prestige-locked-text').style.display = canPrestige ? 'none' : 'block';
+  if (canPrestige) $('prestige-btn').className = 'btn purple full prestige-glow';
+
+  // Leaderboard
+  $('lb-peak').textContent = fmt(G.peakBalance);
+  $('lb-miners').textContent = G.peakMiners;
+  $('lb-bestpnl').textContent = (G.bestPositionPnL>=0?'+':'')+fmt(G.bestPositionPnL);
+}
+
+// =============================================================
+// AUTOSAVE
+// =============================================================
+function saveGame() {
+  const save = {
+    amount: G.amount, clickPower: G.clickPower, minerPower: G.minerPower,
+    miners: G.miners, totalEarned: G.totalEarned, totalClicks: G.totalClicks,
+    bestPS: G.bestPS, minerCost: G.minerCost, prestige: G.prestige,
+    prestigeMult: G.prestigeMult, investingUnlocked: G.investingUnlocked,
+    cryptoValue: G.cryptoValue, totalWins: G.totalWins, totalLosses: G.totalLosses,
+    totalPnL: G.totalPnL, peakBalance: G.peakBalance, peakMiners: G.peakMiners,
+    bestPositionPnL: G.bestPositionPnL, MAX_POSITIONS: G.MAX_POSITIONS,
+    BOUGHT: JSON.parse(JSON.stringify(BOUGHT)),
+    upgradeCosts: [...UPGRADES_CLICK,...UPGRADES_MINE,...UPGRADES_SPECIAL,...UPGRADES_MARKET].reduce((a,u)=>(a[u.id]=u.currentCost,a),{}),
+    autoClick: G.autoClick, marketStability: G.marketStability, insiderInfo: G.insiderInfo,
+    compoundMine: G.compoundMine, luckyClick: G.luckyClick, tradeBot: G.tradeBot,
+    leverageMaster: G.leverageMaster, biggestLuckyClick: G.biggestLuckyClick,
+    closedHistory: G.closedHistory.slice(0,10),
+    lastPlayed: Date.now(),
+  };
+  localStorage.setItem('cryptoClickerV2', JSON.stringify(save));
+}
+
+function loadGame() {
+  const raw = localStorage.getItem('cryptoClickerV2');
+  if (!raw) return;
+  try {
+    const s = JSON.parse(raw);
+    G.amount = s.amount||0; G.clickPower = s.clickPower||1;
+    G.minerPower = s.minerPower||1; G.miners = s.miners||0;
+    G.totalEarned = s.totalEarned||0; G.totalClicks = s.totalClicks||0;
+    G.bestPS = s.bestPS||0; G.minerCost = s.minerCost||100;
+    G.prestige = s.prestige||0; G.prestigeMult = s.prestigeMult||1;
+    G.investingUnlocked = s.investingUnlocked||false;
+    G.cryptoValue = s.cryptoValue||100;
+    G.totalWins = s.totalWins||0; G.totalLosses = s.totalLosses||0;
+    G.totalPnL = s.totalPnL||0; G.peakBalance = s.peakBalance||0;
+    G.peakMiners = s.peakMiners||0; G.bestPositionPnL = s.bestPositionPnL||0;
+    G.MAX_POSITIONS = s.MAX_POSITIONS||5;
+    G.autoClick = s.autoClick||false; G.marketStability = s.marketStability||false;
+    G.insiderInfo = s.insiderInfo||false; G.compoundMine = s.compoundMine||false;
+    G.luckyClick = s.luckyClick||false; G.tradeBot = s.tradeBot||false;
+    G.leverageMaster = s.leverageMaster||false;
+    G.biggestLuckyClick = s.biggestLuckyClick||0;
+    G.closedHistory = s.closedHistory||[];
+    if (s.BOUGHT) Object.assign(BOUGHT, s.BOUGHT);
+    if (s.upgradeCosts) {
+      [...UPGRADES_CLICK,...UPGRADES_MINE,...UPGRADES_SPECIAL,...UPGRADES_MARKET].forEach(u=>{
+        if (s.upgradeCosts[u.id] !== undefined) u.currentCost = s.upgradeCosts[u.id];
+      });
+    }
+    // Offline earnings
+    const away = Math.floor((Date.now() - (s.lastPlayed||Date.now()))/1000);
+    const offline = away * G.miners * G.minerPower * G.prestigeMult;
+    if (offline > 0) {
+      G.amount += offline; G.totalEarned += offline;
+      showMsg('Welcome back! Earned '+fmt(offline)+' offline', 'var(--green)');
+      toast('💰 Offline earnings: +'+fmt(offline));
+    }
+    if (G.investingUnlocked) {
+      $('invest-lock-panel').style.display = 'none';
+      $('invest-open-panel').style.display = 'block';
+    }
+  } catch(e) { console.error('Load error', e); }
+}
+
+setInterval(saveGame, 5000);
+
+// =============================================================
+// CASINO GAMES
+// =============================================================
+// Casino state
+G.casinoWins = 0;
+G.casinoLosses = 0;
+G.casinoPnL = 0;
+
+// Coin flip state
+let cfSelected = null;
+
+// Dice emojis
+const DICE_EMOJI = ['⚀','⚁','⚂','⚃','⚄','⚅'];
+
+// Slot symbols (with weights)
+const SLOT_SYMBOLS = ['💎','₿','🍒','🍋','🍊','🍇','⭐','🔔'];
+const SLOT_WEIGHTS = [1, 2, 5, 8, 8, 8, 10, 10]; // rarer = lower weight
+
+// Roulette state
+const ROULETTE_REDS = new Set([1,3,5,7,9,11,13,15,17,19,21,23,25,27,29,31,33,35]);
+let rouletteBet = null;
+
+// Crash state
+let crashActive = false;
+let crashBetIn = false;
+let crashMult = 1.0;
+let crashTarget = 1.0;
+let crashInterval = null;
+let crashPoints = [];
+let crashHistory = [];
+let crashCashedOut = false;
+
+function setCasinoBet(game, amount) {
+  const id = game==='coinflip'?'cf-bet': game==='dice'?'dice-bet': game==='slots'?'slots-bet': game==='roulette'?'roulette-bet': 'crash-bet';
+  const el = $(id);
+  if (el) el.value = Math.max(1, Math.floor(amount));
+}
+
+function casinoWin(amount) {
+  G.amount += amount;
+  G.totalEarned += amount;
+  G.casinoWins++;
+  G.casinoPnL += amount;
+  updateCasinoStats();
+  checkAchievements();
+  updateUI();
+}
+
+function casinoLose(amount) {
+  G.casinoLosses++;
+  G.casinoPnL -= amount;
+  updateCasinoStats();
+  checkAchievements();
+  updateUI();
+}
+
+function updateCasinoStats() {
+  $('cas-wins').textContent = G.casinoWins;
+  $('cas-losses').textContent = G.casinoLosses;
+  const pnlEl = $('cas-pnl');
+  pnlEl.textContent = (G.casinoPnL >= 0 ? '+' : '') + fmt(G.casinoPnL);
+  pnlEl.style.color = G.casinoPnL >= 0 ? 'var(--green)' : 'var(--red)';
+}
+
+function getCasinoBet(id) {
+  const val = parseInt($(id).value);
+  if (isNaN(val) || val < 1) { showMsg('Enter a valid bet!'); return null; }
+  if (val > G.amount) { showMsg('Not enough ₿!'); return null; }
+  return val;
+}
+
+// ---- COIN FLIP ----
+function selectCoinSide(side) {
+  cfSelected = side;
+  $('cf-heads').classList.toggle('selected', side === 'heads');
+  $('cf-tails').classList.toggle('selected', side === 'tails');
+}
+
+function playCoinFlip() {
+  if (!cfSelected) { showMsg('Pick heads or tails first!'); return; }
+  const bet = getCasinoBet('cf-bet');
+  if (bet === null) return;
+  G.amount -= bet;
+
+  const coin = $('cf-coin');
+  const result = $('cf-result');
+  result.className = 'casino-result neutral';
+  result.textContent = 'Flipping…';
+  coin.classList.remove('flipping');
+  void coin.offsetWidth;
+  coin.classList.add('flipping');
+
+  const outcome = Math.random() < 0.5 ? 'heads' : 'tails';
+  const won = outcome === cfSelected;
+
+  setTimeout(() => {
+    coin.classList.remove('flipping');
+    coin.textContent = outcome === 'heads' ? '🟡' : '⚫';
+    $('cf-heads').classList.remove('selected','winner','loser');
+    $('cf-tails').classList.remove('selected','winner','loser');
+
+    if (won) {
+      const gain = bet;
+      casinoWin(bet * 2);
+      result.className = 'casino-result win';
+      result.textContent = `🎉 ${outcome.toUpperCase()}! You won +${fmt(gain)}!`;
+      toast(`🪙 Coin Flip Win! +${fmt(gain)}`);
+      logEvent(`🪙 Coin Flip: ${outcome} — WON +${fmt(gain)}`);
+      $('cf-'+outcome).classList.add('winner');
+    } else {
+      casinoLose(bet);
+      result.className = 'casino-result lose';
+      result.textContent = `💸 ${outcome.toUpperCase()}! Lost ${fmt(bet)}`;
+      logEvent(`🪙 Coin Flip: ${outcome} — LOST ${fmt(bet)}`);
+      $('cf-'+outcome).classList.add('winner');
+      $('cf-'+(outcome==='heads'?'tails':'heads')).classList.add('loser');
+    }
+    cfSelected = null;
+  }, 1800);
+}
+
+// ---- DICE DUEL ----
+function playDice() {
+  const bet = getCasinoBet('dice-bet');
+  if (bet === null) return;
+  G.amount -= bet;
+
+  const youEl = $('dice-you');
+  const houseEl = $('dice-house');
+  const result = $('dice-result');
+  result.className = 'casino-result neutral';
+  result.textContent = 'Rolling…';
+
+  youEl.classList.add('dice-rolling');
+  houseEl.classList.add('dice-rolling');
+
+  let frames = 0;
+  const shake = setInterval(()=>{
+    youEl.textContent = DICE_EMOJI[Math.floor(Math.random()*6)];
+    houseEl.textContent = DICE_EMOJI[Math.floor(Math.random()*6)];
+    if (++frames > 14) clearInterval(shake);
+  }, 80);
+
+  setTimeout(()=>{
+    youEl.classList.remove('dice-rolling');
+    houseEl.classList.remove('dice-rolling');
+    const youRoll = Math.floor(Math.random()*6)+1;
+    const houseRoll = Math.floor(Math.random()*6)+1;
+    youEl.textContent = DICE_EMOJI[youRoll-1];
+    houseEl.textContent = DICE_EMOJI[houseRoll-1];
+
+    if (youRoll > houseRoll) {
+      // payout scales with how much you won by
+      const margin = youRoll - houseRoll;
+      const mult = 1 + margin * 0.3;
+      const gain = Math.floor(bet * mult);
+      casinoWin(bet + gain);
+      result.className = 'casino-result win';
+      result.textContent = `🎲 You: ${youRoll} vs House: ${houseRoll} — WON +${fmt(gain)}!`;
+      toast(`🎲 Dice Win! +${fmt(gain)}`);
+      logEvent(`🎲 Dice: ${youRoll} vs ${houseRoll} — WON +${fmt(gain)}`);
+    } else if (youRoll === houseRoll) {
+      G.amount += bet; // push
+      result.className = 'casino-result neutral';
+      result.textContent = `🎲 You: ${youRoll} vs House: ${houseRoll} — PUSH! Bet returned.`;
+      logEvent(`🎲 Dice: ${youRoll} vs ${houseRoll} — PUSH`);
+    } else {
+      casinoLose(bet);
+      result.className = 'casino-result lose';
+      result.textContent = `🎲 You: ${youRoll} vs House: ${houseRoll} — LOST ${fmt(bet)}`;
+      logEvent(`🎲 Dice: ${youRoll} vs ${houseRoll} — LOST ${fmt(bet)}`);
+    }
+    updateUI();
+  }, 1300);
+}
+
+// ---- SLOTS ----
+function weightedRandom(symbols, weights) {
+  const total = weights.reduce((a,b)=>a+b,0);
+  let r = Math.random()*total;
+  for (let i=0;i<symbols.length;i++) {
+    r -= weights[i];
+    if (r <= 0) return symbols[i];
+  }
+  return symbols[symbols.length-1];
+}
+
+let slotsRunning = false;
+function playSlots() {
+  if (slotsRunning) return;
+  const bet = getCasinoBet('slots-bet');
+  if (bet === null) return;
+  G.amount -= bet;
+  slotsRunning = true;
+  $('slots-btn').disabled = true;
+
+  const reels = [$('slot-1'),$('slot-2'),$('slot-3')];
+  reels.forEach(r=>r.classList.add('spinning'));
+  const result = $('slots-result');
+  result.className = 'casino-result neutral';
+  result.textContent = '🎰 Spinning…';
+
+  let frame = 0;
+  const spin = setInterval(()=>{
+    reels.forEach(r=>r.textContent = SLOT_SYMBOLS[Math.floor(Math.random()*SLOT_SYMBOLS.length)]);
+    if (++frame > 20) clearInterval(spin);
+  }, 60);
+
+  const finalSymbols = [
+    weightedRandom(SLOT_SYMBOLS, SLOT_WEIGHTS),
+    weightedRandom(SLOT_SYMBOLS, SLOT_WEIGHTS),
+    weightedRandom(SLOT_SYMBOLS, SLOT_WEIGHTS)
+  ];
+
+  // Reveal one by one
+  const stops = [800, 1100, 1400];
+  stops.forEach((delay, i) => {
+    setTimeout(()=>{
+      reels[i].classList.remove('spinning');
+      reels[i].textContent = finalSymbols[i];
+    }, delay);
+  });
+
+  setTimeout(()=>{
+    slotsRunning = false;
+    $('slots-btn').disabled = false;
+    const [s1,s2,s3] = finalSymbols;
+    let mult = 0;
+    let msg = '';
+
+    if (s1===s2 && s2===s3) {
+      // Triple match
+      if (s1==='💎') { mult=50; msg='💎💎💎 DIAMOND JACKPOT!!'; reels.forEach(r=>r.classList.add('jackpot')); }
+      else if (s1==='₿') { mult=25; msg='₿₿₿ BITCOIN JACKPOT!'; reels.forEach(r=>r.classList.add('jackpot')); }
+      else if (s1==='🍒') { mult=10; msg='🍒🍒🍒 Cherry Jackpot!'; }
+      else { mult=5; msg=`${s1}${s1}${s1} Triple Match!`; }
+    } else if (s1===s2||s2===s3||s1===s3) {
+      mult=2; msg=`Two matching — small win!`;
+    }
+
+    setTimeout(()=>reels.forEach(r=>r.classList.remove('jackpot')), 2000);
+
+    if (mult > 0) {
+      const gain = bet*mult - bet;
+      casinoWin(bet*mult);
+      result.className = 'casino-result win';
+      result.textContent = `🎉 ${msg} +${fmt(gain)} (${mult}×)`;
+      toast(`🎰 Slots: ${msg} +${fmt(gain)}`);
+      logEvent(`🎰 Slots ${s1}${s2}${s3}: WON +${fmt(gain)}`);
+    } else {
+      casinoLose(bet);
+      result.className = 'casino-result lose';
+      result.textContent = `💸 No match — lost ${fmt(bet)}`;
+      logEvent(`🎰 Slots ${s1}${s2}${s3}: LOST ${fmt(bet)}`);
+    }
+    updateUI();
+  }, 1700);
+}
+
+// ---- ROULETTE ----
+function selectRoulette(type) {
+  rouletteBet = type;
+  ['red','black','zero','odd','even','high'].forEach(t=>{
+    $('rb-'+t).classList.toggle('selected', t===type);
+  });
+}
+
+function playRoulette() {
+  if (!rouletteBet) { showMsg('Choose a bet type first!'); return; }
+  const bet = getCasinoBet('roulette-bet');
+  if (bet === null) return;
+  G.amount -= bet;
+
+  const btn = $('roulette-btn');
+  btn.disabled = true;
+  const result = $('roulette-result');
+  result.className = 'casino-result neutral';
+  result.textContent = 'Spinning…';
+
+  const wheel = $('roulette-wheel');
+  const spinDeg = 720 + Math.floor(Math.random()*360);
+  wheel.style.transition = 'transform 2s cubic-bezier(0.17, 0.67, 0.35, 0.98)';
+  wheel.style.transform = `rotate(${spinDeg}deg)`;
+
+  const num = Math.floor(Math.random()*37); // 0-36
+  const isRed = ROULETTE_REDS.has(num);
+  const isZero = num === 0;
+
+  setTimeout(()=>{
+    wheel.style.transition = 'none';
+    wheel.style.transform = 'rotate(0deg)';
+    btn.disabled = false;
+    $('roulette-number').textContent = num + (isZero ? ' 🟢' : isRed ? ' 🔴' : ' ⚫');
+    $('roulette-number').style.color = isZero ? 'var(--green)' : isRed ? '#ff6666' : 'var(--text)';
+
+    let won = false;
+    let payout = 0;
+
+    if (rouletteBet==='red'   && isRed && !isZero) { won=true; payout=bet; }
+    else if (rouletteBet==='black' && !isRed && !isZero) { won=true; payout=bet; }
+    else if (rouletteBet==='zero'  && isZero) { won=true; payout=bet*35; }
+    else if (rouletteBet==='odd'   && !isZero && num%2===1) { won=true; payout=bet; }
+    else if (rouletteBet==='even'  && !isZero && num%2===0) { won=true; payout=bet; }
+    else if (rouletteBet==='high'  && num>=19) { won=true; payout=bet; }
+
+    if (won) {
+      casinoWin(bet + payout);
+      result.className = 'casino-result win';
+      result.textContent = `🎡 ${num}! You won +${fmt(payout)}!`;
+      toast(`🎡 Roulette Win! +${fmt(payout)}`);
+      logEvent(`🎡 Roulette: ${num} — WON +${fmt(payout)}`);
+    } else {
+      casinoLose(bet);
+      result.className = 'casino-result lose';
+      result.textContent = `🎡 ${num}! Lost ${fmt(bet)}`;
+      logEvent(`🎡 Roulette: ${num} — LOST ${fmt(bet)}`);
+    }
+    updateUI();
+  }, 2200);
+}
+
+// ---- CRASH ----
+const crashCanvas = $('crash-canvas');
+const crashCtx = crashCanvas.getContext('2d');
+
+function resizeCrashCanvas() {
+  crashCanvas.width = crashCanvas.parentElement.offsetWidth;
+  crashCanvas.height = crashCanvas.parentElement.offsetHeight;
+}
+resizeCrashCanvas();
+window.addEventListener('resize', resizeCrashCanvas);
+
+function drawCrashChart(crashed) {
+  resizeCrashCanvas();
+  const w = crashCanvas.width, h = crashCanvas.height;
+  crashCtx.clearRect(0,0,w,h);
+  if (crashPoints.length < 2) return;
+
+  crashCtx.beginPath();
+  crashPoints.forEach((pt,i)=>{
+    const x = (i/(Math.max(crashPoints.length-1,1)))*w;
+    const maxMult = Math.max(...crashPoints, 1.5);
+    const y = h - ((pt-1)/(maxMult-1+0.01))*(h-10)-5;
+    i===0 ? crashCtx.moveTo(x,y) : crashCtx.lineTo(x,y);
+  });
+  crashCtx.strokeStyle = crashed ? '#ff4466' : '#00ff88';
+  crashCtx.lineWidth = 2.5;
+  crashCtx.stroke();
+
+  // Fill under line
+  const lastX = ((crashPoints.length-1)/Math.max(crashPoints.length-1,1))*w;
+  const maxMult2 = Math.max(...crashPoints, 1.5);
+  const lastY = h - ((crashPoints[crashPoints.length-1]-1)/(maxMult2-1+0.01))*(h-10)-5;
+  crashCtx.lineTo(lastX,h); crashCtx.lineTo(0,h); crashCtx.closePath();
+  crashCtx.fillStyle = crashed ? 'rgba(255,68,102,0.07)' : 'rgba(0,255,136,0.07)';
+  crashCtx.fill();
+}
+
+function generateCrashPoint() {
+  // House edge ~5%. Crash point formula: 1 / (1 - random) capped
+  const r = Math.random();
+  if (r < 0.05) return 1.0; // instant crash
+  const raw = 0.95 / (1 - Math.random());
+  return Math.min(raw, 100);
+}
+
+function startCrash() {
+  if (crashActive) return;
+  const bet = getCasinoBet('crash-bet');
+  if (bet === null) return;
+  G.amount -= bet;
+
+  crashActive = true;
+  crashBetIn = true;
+  crashCashedOut = false;
+  crashMult = 1.0;
+  crashPoints = [1.0];
+  crashTarget = generateCrashPoint();
+
+  $('crash-start-btn').disabled = true;
+  $('crash-cashout-btn').disabled = false;
+  $('crash-result').className = 'casino-result neutral';
+  $('crash-result').textContent = '🚀 Rocket is climbing…';
+  updateUI();
+
+  crashInterval = setInterval(()=>{
+    const step = 0.03 + crashMult * 0.01;
+    crashMult = Math.round((crashMult + step) * 100) / 100;
+    crashPoints.push(crashMult);
+    if (crashPoints.length > 60) crashPoints.shift();
+
+    const multEl = $('crash-mult');
+    multEl.textContent = crashMult.toFixed(2) + '×';
+    multEl.className = 'crash-multiplier' + (crashMult >= 3 ? ' danger' : '');
+    drawCrashChart(false);
+
+    if (crashMult >= crashTarget) {
+      clearInterval(crashInterval);
+      crashActive = false;
+      $('crash-cashout-btn').disabled = true;
+      $('crash-start-btn').disabled = false;
+      multEl.textContent = '💥 ' + crashMult.toFixed(2) + '×';
+      multEl.className = 'crash-multiplier crashed';
+      drawCrashChart(true);
+
+      addCrashHistory(crashMult, true);
+
+      if (!crashCashedOut) {
+        casinoLose(bet);
+        $('crash-result').className = 'casino-result lose';
+        $('crash-result').textContent = `💥 Crashed at ${crashMult.toFixed(2)}× — Lost ${fmt(bet)}`;
+        logEvent(`🚀 Crash at ${crashMult.toFixed(2)}× — LOST ${fmt(bet)}`);
+        toast(`💥 Rocket crashed at ${crashMult.toFixed(2)}×!`);
+      }
+      updateUI();
+    }
+  }, 150);
+}
+
+function cashOutCrash() {
+  if (!crashActive || crashCashedOut) return;
+  clearInterval(crashInterval);
+  crashActive = false;
+  crashCashedOut = true;
+
+  const bet = parseInt($('crash-bet').value);
+  const gain = Math.floor(bet * crashMult) - bet;
+  casinoWin(Math.floor(bet * crashMult));
+
+  $('crash-cashout-btn').disabled = true;
+  $('crash-start-btn').disabled = false;
+  $('crash-mult').className = 'crash-multiplier';
+  $('crash-result').className = 'casino-result win';
+  $('crash-result').textContent = `💰 Cashed out at ${crashMult.toFixed(2)}×! Won +${fmt(gain)}`;
+  logEvent(`🚀 Crash cash-out ${crashMult.toFixed(2)}× — WON +${fmt(gain)}`);
+  toast(`🚀 Cashed out at ${crashMult.toFixed(2)}×! +${fmt(gain)}`);
+
+  addCrashHistory(crashMult, false);
+  drawCrashChart(false);
+  updateUI();
+}
+
+function addCrashHistory(mult, crashed) {
+  crashHistory.unshift(mult);
+  if (crashHistory.length > 8) crashHistory.pop();
+  const hist = $('crash-history');
+  hist.innerHTML = crashHistory.map((m,i)=>{
+    const cls = m < 1.5 ? 'low' : m < 3 ? 'med' : 'high';
+    return `<div class="crash-hist-chip ${cls}">${m.toFixed(2)}×</div>`;
+  }).join('');
+}
+
+// Draw initial crash chart placeholder
+drawCrashChart(false);
+
+// Update casino stats on load
+updateCasinoStats();
+
+// Patch save/load to include casino stats
+const _origSave = saveGame;
+saveGame = function() {
+  _origSave();
+  // Patch the stored data with casino stats
+  try {
+    const raw = localStorage.getItem('cryptoClickerV2');
+    if (raw) {
+      const s = JSON.parse(raw);
+      s.casinoWins = G.casinoWins||0;
+      s.casinoLosses = G.casinoLosses||0;
+      s.casinoPnL = G.casinoPnL||0;
+      localStorage.setItem('cryptoClickerV2', JSON.stringify(s));
+    }
+  } catch(e){}
+};
+
+// Patch load
+const _origLoad = loadGame;
+// We read casino data after load
+setTimeout(()=>{
+  try {
+    const raw = localStorage.getItem('cryptoClickerV2');
+    if (raw) {
+      const s = JSON.parse(raw);
+      G.casinoWins = s.casinoWins||0;
+      G.casinoLosses = s.casinoLosses||0;
+      G.casinoPnL = s.casinoPnL||0;
+      updateCasinoStats();
+    }
+  } catch(e){}
+}, 100);
+
+// Periodic casino stats update
+setInterval(updateCasinoStats, 3000);
+
+// Boot
+loadGame();
+renderBoosts();
+renderUpgrades();
+updateUI();
+checkAchievements();
+drawChart();
+logEvent('Game loaded. Start clicking!');
+
+// Periodic UI refresh
+setInterval(()=>{
+  updateUI();
+  renderUpgrades();
+  if (G.investingUnlocked) updatePositionsUI();
+}, 2000);</script>
+</body>
+</html>

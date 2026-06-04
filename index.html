@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRYPTO clicker</title>
+    <link rel="stylesheet" href="start.css">
+    <script src="script.js" defer></script>
+</head>
+<body>
+    <header>
+        <h1>CRYPTO CLICKER</h1>
+        <h2 id="amount">0</h2>
+        <div id="goal_bar">
+            <div class="goal-label">
+                <span>Goal: Crypto Millionaire</span>
+                <span id="goal-pct">0%</span>
+            </div>
+            <div class="goal-track">
+                <div id="goal-fill"></div>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <button id="click"><img src="bitcoin.png" width="300px" height="300px"></button>
+        <button id="upgrade">Upgrade click - 50 BTC</button>
+        <button id="investing">Unlock investing - 100 BTC</button>
+        <div id="inv-panel">
+            <div class="market-header">Crypto Market <span id="multiplier-val">1.00x</span></div>
+            <div class="market-row">
+                <input id="bet-input" type="number" min="1" placeholder="BTC" />
+                <button onclick="setMaxBet()">Max</button>
+                <button id="bet-btn" onclick="placeBet()">Buy</button>
+                <button onclick="collectBet()">Sell</button>
+            </div>
+            <div id="bet-result"></div>
+            <button class="inv-btn" onclick="buyInvestment(0)"><b>Mining Rig</b><br>100 BTC</button>
+            <button class="inv-btn" onclick="buyInvestment(1)"><b>Crypto Farm</b><br>500 BTC</button>
+            <button class="inv-btn" onclick="buyInvestment(2)"><b>Data Center</b><br>2K BTC</button>
+            <button class="inv-btn" onclick="buyInvestment(3)"><b>Hedge Fund</b><br>8K BTC</button>
+        </div>
+    </main>
+</body>
+</html>
