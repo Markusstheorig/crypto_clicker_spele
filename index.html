@@ -24,6 +24,7 @@
 
     <main>
         <button id="click"><img src="bitcoin.png" width="300px" height="300px"></button>
+        <p id="passive">0 BTC/s</p>
         <button id="upgrade">Upgrade click - 50 BTC</button>
         <button id="investing">Unlock investing - 100 BTC</button>
         <div id="inv-panel">
@@ -35,10 +36,21 @@
                 <button onclick="collectBet()">Sell</button>
             </div>
             <div id="bet-result"></div>
-            <button class="inv-btn" onclick="buyInvestment(0)"><b>Mining Rig</b><br>100 BTC</button>
-            <button class="inv-btn" onclick="buyInvestment(1)"><b>Crypto Farm</b><br>500 BTC</button>
-            <button class="inv-btn" onclick="buyInvestment(2)"><b>Data Center</b><br>2K BTC</button>
-            <button class="inv-btn" onclick="buyInvestment(3)"><b>Hedge Fund</b><br>8K BTC</button>
+            <button class="inv-btn" onclick="buyInvestment(0)"><b>Mining Rig</b><br>100 BTC<br>1 BTC/s</button>
+            <button class="inv-btn" onclick="buyInvestment(1)"><b>Crypto Farm</b><br>500 BTC<br>5 BTC/s</button>
+            <button class="inv-btn" onclick="buyInvestment(2)"><b>Data Center</b><br>2K BTC<br>20 BTC/s</button>
+            <button class="inv-btn" onclick="buyInvestment(3)"><b>Hedge Fund</b><br>8K BTC<br>80 BTC/s</button>
+            
+        </div>
+        <button id="shop-btn">Open Shop - 2K BTC</button>
+        <div id="shop-panel">
+            <h3>Shop</h3>
+            <div id="shop-offer"></div>
+            <button id="shop-buy">BUY</button>
+        </div>
+        <div id="win-screen">
+            <h1>You're a Crypto Millionaire!</h1>
+            <button id="restart-btn">Play Again</button>
         </div>
     </main>
 </body>

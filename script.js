@@ -3,6 +3,9 @@ const amountEl = document.getElementById('amount')
 const upgradeBtn = document.getElementById('upgrade')
 const investmentPanel = document.getElementById('inv-panel')
 const investingUnlock = document.getElementById('investing')
+const shopBtn = document.getElementById('shop-btn')
+const shopPanel = document.getElementById('shop-panel')
+const shopBuyBtn = document.getElementById('shop-buy')
 
 const GOAL = 1_000_000
 
@@ -11,21 +14,30 @@ let bonus = 1
 let passive = 0
 let won = false
 let upgradeCost = 50
+let shopOpen = false
 const investingCost = 100
 
 let investments = [
-    { name: 'Mining Rig',  cost: 100,  income: 1,  bought: false },
-    { name: 'Crypto Farm', cost: 500,  income: 5,  bought: false },
-    { name: 'Data Center', cost: 2000, income: 20, bought: false },
-    { name: 'Hedge Fund',  cost: 8000, income: 80, bought: false },
+    { name: 'Mining Rig',  cost: 100,  income: 1,  count: 0 },
+    { name: 'Crypto Farm', cost: 500,  income: 5,  count: 0 },
+    { name: 'Data Center', cost: 2000, income: 20, count: 0 },
+    { name: 'Hedge Fund',  cost: 8000, income: 80, count: 0 },
+]
+
+let investments_example = [
+    { name: 'Mining Rig',  cost: 100,  income: 1,  count: 0 },
+    { name: 'Crypto Farm', cost: 500,  income: 5,  count: 0 },
+    { name: 'Data Center', cost: 2000, income: 20, count: 0 },
+    { name: 'Hedge Fund',  cost: 8000, income: 80, count: 0 },
 ]
 
 let multiplier = 1.0
 let betAmount  = 0
 let betActive  = false
 
-
+shopPanel.style.display = 'none'
 investmentPanel.style.display = 'none'
+shopBtn.style.display = 'none'
 
 clicker.addEventListener('click', () => {
     amount += bonus
@@ -55,27 +67,92 @@ investingUnlock.addEventListener('click', () => {
         alert('Not enough BTC!')
         return
     }
+    amount -= 100
     investmentPanel.style.display = 'block'
     investingUnlock.style.display = 'none'
+    shopBtn.style.display = 'block'
+    update()
+})
+
+shopBtn.addEventListener('click', () => {
+    if (amount < 2000) {
+        alert('Not enough BTC!')
+        return
+    }
+    amount -= 2000
+    shopBtn.style.display = 'none'
+    shopPanel.style.display = 'block'
+    shopOpen = true
+    shopReroll()
+    update()
+})
+
+shopBuyBtn.addEventListener('click', () => {
+    if (shopOption === 0) {
+        if (amount < 40000) { alert('Not enough BTC!'); return }
+        if (!betActive) { alert('You need to place a bet first!'); return }
+        amount -= 40000
+        betAmount *= 5
+        update()
+    } else if (shopOption === 1) {
+        if (amount < 10000) { alert('Not enough BTC!'); return }
+        amount -= 10000
+        bonus *= 2
+        update()
+    } else {
+        if (amount < 10000) { alert('Not enough BTC!'); return }
+        amount -= 10000
+        let ticks = 0
+        const interval = setInterval(() => {
+            amount += 1000
+            update()
+            if (++ticks >= 15) clearInterval(interval)
+        }, 1000)
+    }
+    shopBuyBtn.style.display = 'none'
+    update()
 })
 
 
 function buyInvestment(index) {
     const inv = investments[index]
-    if (inv.bought || amount < inv.cost) return
+    if (amount < inv.cost) return
     amount -= inv.cost
-    inv.bought = true
+    inv.cost *= 2.5
     passive += inv.income
-    const btn = document.querySelectorAll('.inv-btn')[index]
-    btn.disabled = true
-    btn.innerHTML = `<b>${inv.name}</b><br>✓ +${inv.income}/s`
+    inv.count++
     update()
 }
-
 
 function setMaxBet() {
     document.getElementById('bet-input').value = Math.floor(amount)
 }
+
+let shopOption = 2
+
+function shopReroll() {
+    const shopRoll = Math.random()
+    if (shopRoll < 0.06) shopOption = 0
+    else if (shopRoll < 0.21) shopOption = 1
+    else shopOption = 2
+
+    if (shopOption === 0) {
+        document.getElementById('shop-offer').innerHTML =
+            `Insider Trading<br>Quintuple your current betted amount!<br><b>Price: 40K BTC</b>`
+    } else if (shopOption === 1) {
+        document.getElementById('shop-offer').innerHTML =
+            `Overclocked Clicker<br>Double your BTC per click<br><b>Price: 10K BTC</b>`
+    } else {
+        document.getElementById('shop-offer').innerHTML =
+            `Smart Investing<br>Pay 10K to gain 15K over 15 seconds<br><b>Price: 10K BTC</b>`
+    }
+    shopBuyBtn.style.display = 'block'
+}
+
+
+setInterval(() => {
+    if (!won && shopOpen) shopReroll()
+}, 30000)
 
 function placeBet() {
     if (betActive) return
@@ -104,7 +181,7 @@ function collectBet() {
 
 setInterval(() => {
     const roll = Math.random()
-    if      (roll < 0.04) multiplier = +(3   + Math.random() * 5  ).toFixed(2)
+    if (roll < 0.04) multiplier = +(3   + Math.random() * 5  ).toFixed(2)
     else if (roll < 0.15) multiplier = +(1.5 + Math.random() * 1.5).toFixed(2)
     else if (roll < 0.45) multiplier = +(1.0 + Math.random() * 0.5).toFixed(2)
     else if (roll < 0.99) multiplier = +(0.1 + Math.random() * 0.9).toFixed(2)
@@ -138,12 +215,14 @@ function checkWin() {
 document.getElementById('restart-btn').addEventListener('click', () => {
     amount = 0; bonus = 1; passive = 0; won = false; upgradeCost = 50
     betAmount = 0; betActive = false
-    investments.forEach(inv => inv.bought = false)
     document.getElementById('win-screen').style.display = 'none'
-    document.querySelectorAll('.inv-btn').forEach((btn, i) => {
-        btn.disabled = false
-        btn.innerHTML = `<b>${investments[i].name}</b><br>${fmt(investments[i].cost)} BTC`
-    })
+    investments = investments_example.map(inv => ({ ...inv }))
+    shopOpen = false
+    shopBuyBtn.style.display = 'block'
+    shopPanel.style.display = 'none'
+    shopBtn.style.display = 'none'
+    investmentPanel.style.display = 'none'
+    investingUnlock.style.display = 'block'
     update()
 })
 
@@ -156,13 +235,15 @@ function update() {
     document.getElementById('goal-fill').style.width = pct.toFixed(2) + '%'
     document.getElementById('goal-pct').textContent = pct.toFixed(1) + '%'
 
-
-    document.querySelectorAll('.inv-btn').forEach((btn, i) => {
-        if (!investments[i].bought) btn.disabled = amount < investments[i].cost
-    })
+    for (let index_check = 0; index_check < 4; index_check++) {
+    document.querySelectorAll('.inv-btn')[index_check].innerHTML = 
+        `<b>${investments[index_check].name}</b><br>${fmt(investments[index_check].cost)} BTC | owned: ${investments[index_check].count}<br>${investments[index_check].income} BTC/s`
+}
 
     const bb = document.getElementById('bet-btn')
     if (bb) bb.disabled = betActive
+
+    document.getElementById('passive').textContent = `${passive} BTC/s`
 }
 
 function fmt(n) {
